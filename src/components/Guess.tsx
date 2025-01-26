@@ -17,11 +17,11 @@ const GuessLetter = styled.span`
   color: ${props => (props.status === 'complete' ? 'white' : '#000')};
   background-color: ${props => {
     switch (props.status) {
-      case 'Grey':
+      case 'grey':
         return '#3a3a3c';
-      case 'Yellow':
+      case 'yellow':
         return '#b59f3b';
-      case 'Green':
+      case 'green':
         return '#538d4e';
     }
   }};
@@ -41,7 +41,7 @@ const Guess = ({ guess, index }: GuessPropsType): any => {
       <GuessLetter key={index} status={mem.status}>
         {mem.letter}
       </GuessLetter>
-    );
+    ));
   };
 
   return (

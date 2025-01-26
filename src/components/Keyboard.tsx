@@ -46,13 +46,13 @@ const Key = styled.button<{ isEnter: boolean }>`
 const Keyboard = ({ onKeyClick }) => { // TODO: receive or read state: for the letter colours - state.PuzzlePlay.lettersGrey etc
   const topRow = ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'];
   const middleRow = ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'];
-  const bottomRow = ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '⨉'];
+  const bottomRow = ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<'];
 
   const renderKey = (key: string) => (
     <Key
       key={key}
       isEnter={key === 'ENTER'}
-      onClick={() => onKeyClick(key, true)}
+      onClick={() => onKeyClick(key, (key === 'ENTER' || key === '<') ? false : true)}
     >
       {key}
     </Key>
