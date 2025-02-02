@@ -55,4 +55,20 @@ const analyseGuess = ( guess: Guess, puzzleDefinition: PuzzleDefinition ) => {
   return(guess);
 };
 
-export { analyseGuess }
+const dictionarySearch = async (word: string): Promise<any | null> => {
+  if (!word || !word.length) return null
+  const dictionaryUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`
+  try {
+    const response = await fetch(dictionaryUrl);
+    if (!response.ok) {
+      return null
+    }
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error(`error looking up word =${word}; error =${error}`)
+    return null
+  }
+}
+
+export { analyseGuess, dictionarySearch }

@@ -11,7 +11,8 @@ const GuessLetter = styled.span`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: ${props => (props.status ? '56px' : '52px')};
+  width: 100%;
+  // width: ${props => (props.status ? '56px' : '52px')};
   height: ${props => (props.status ? '56px' : '52px')};
   border: ${props => (props.status ? 'none' : '2px solid #d3d6da')};
   color: ${props => (props.status === 'complete' ? 'white' : '#000')};
