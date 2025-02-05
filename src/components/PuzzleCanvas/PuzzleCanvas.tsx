@@ -26,18 +26,18 @@ const PuzzleCanvas = ({ puzzlePlay }) => {
     })
   );
 
-  const handleKeyPress = async (keyPressed: string, isLetter: boolean = false) => {
+  const handleKeyPress = async (keyPressed: string | any, isLetter: boolean = false) => {
     const guessUpdated = guessesLocal[activeGuess];
     const letterBeingSet = guessUpdated.nextLetterIndex;
 
     if (!isLetter) {
       // Handle delete and submit
       if (guessUpdated.nextLetterIndex === 0) return; // nothing to submit or delete when next index = 0
-      if (keyPressed === '<') {
+      if (keyPressed === 'delete') {
         guessUpdated.letters[letterBeingSet - 1] = {}; // reset the GuessLetter object entirely - not just the letter
         guessUpdated.nextLetterIndex -= 1;
       }
-      if (keyPressed === 'ENTER') {
+      if (keyPressed === 'enter') {
         console.log(`>> SUBMIT GUESS`);
 
         // if not enough letters - show a dialog & rtn

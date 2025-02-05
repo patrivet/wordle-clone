@@ -6,6 +6,8 @@ export const GuessWrapper = styled.div`
   row-gap: 5px;
   height: 360px;
   width: 300px;
+  margin: 0 auto;
+  padding: 10px;
 `;
 GuessWrapper.displayName = 'GuessWrapper';
 
@@ -14,7 +16,7 @@ export const OverlayWrapper = styled.div`
   display: flex;
   justify-content: center;
   z-index: 100;
-`
+`;
 OverlayWrapper.displayName = 'OverlayWrapper';
 
 export const OverlayMessage = styled.div`
