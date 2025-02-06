@@ -8,3 +8,15 @@
 * {
   font-family: 'nyt-franklin', sans-serif;
 }
+
+body {
+  margin: 0;
+}
+
+.app-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0 auto;
+  max-width: 500px;
+}
