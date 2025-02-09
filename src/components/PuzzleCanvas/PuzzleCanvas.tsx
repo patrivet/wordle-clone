@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import Keyboard from '../Keyboard';
 import Guess from '../Guess';
+import { Guess as GuessType } from '../../types'
 import { useStoreState, useStoreActions } from 'easy-peasy';
 import { analyseGuess, dictionarySearch } from '../../utils';
 import useOverlay from '../../hooks/useOverlay';
-import { GuessWrapper, OverlayMessage, OverlayWrapper } from './PuzzleCanvas.style';
+import {
+  GuessWrapper,
+  OverlayMessage,
+  OverlayWrapper,
+} from './PuzzleCanvas.style';
 
 const PuzzleCanvas = ({ puzzlePlay }) => {
-  // using puzzlePlay as prop - but could read from state instead?
+  // using puzzlePlay as prop - but could read from state instead like puzzleDefintiion?
   const puzzleDefinition = useStoreState(state => state.puzzleDefinition);
   const updatePuzzlePlay = useStoreActions(actions => actions.updatePuzzlePlay);
   const [overlayMessage, showOverlay] = useOverlay() as [
@@ -15,7 +20,6 @@ const PuzzleCanvas = ({ puzzlePlay }) => {
     (message: string, duration?: number) => void
   ];
 
-  // ! FIXME using props for puzzlePlay and useContext for puzzleDefintiion --- shouldn't this be uniform - i.e. use both from props or both from useContext.
   const activeGuess = puzzlePlay.activeGuess;
   const [guessesLocal, setLocalGuesses] = useState(
     puzzlePlay?.guesses.map(guess => {
@@ -26,13 +30,15 @@ const PuzzleCanvas = ({ puzzlePlay }) => {
     })
   );
 
-  const handleKeyPress = async (keyPressed: string | any, isLetter: boolean = false) => {
+  const handleKeyPress = async (
+    keyPressed: string | any,
+    isLetter: boolean = false
+  ) => {
     const guessUpdated = guessesLocal[activeGuess];
     const letterBeingSet = guessUpdated.nextLetterIndex;
 
     if (!isLetter) {
       // Handle delete and submit
-      if (guessUpdated.nextLetterIndex === 0) return; // nothing to submit or delete when next index = 0
       if (keyPressed === 'delete') {
         guessUpdated.letters[letterBeingSet - 1] = {}; // reset the GuessLetter object entirely - not just the letter
         guessUpdated.nextLetterIndex -= 1;
@@ -46,7 +52,7 @@ const PuzzleCanvas = ({ puzzlePlay }) => {
           return;
         }
         // Check if guess is not a found work
-        const res = await dictionarySearch(guessUpdated.word)
+        const res = await dictionarySearch(guessUpdated.word);
         if (!res) {
           showOverlay('Not in word list', 3000);
           return;
@@ -57,7 +63,7 @@ const PuzzleCanvas = ({ puzzlePlay }) => {
           guessesLocal[activeGuess],
           puzzleDefinition
         );
-        updateGuessesInContext(analysedGuess);
+        updateGuesses(analysedGuess);
       }
     } else {
       // letter handling
@@ -77,23 +83,30 @@ const PuzzleCanvas = ({ puzzlePlay }) => {
     });
   };
 
-  const updateGuessesInContext = guessToUpdate => {
-    // update guesses in global state - with the submitted guess
-    // Create updated puzzlePlay object with new guesses array
+  const updateGuesses = (guessToUpdate: GuessType) => {
     const updatedPuzzlePlay = {
       ...puzzlePlay,
       guesses: puzzlePlay.guesses.map((guess, index) =>
         index === activeGuess ? guessToUpdate : guess
       ),
       activeGuess: activeGuess + 1, // Increment active guess
+      letterStatuses: guessToUpdate.letters.reduce((acc, guessLetter) => {
+        if (guessLetter.status) {
+          if (acc[guessLetter.letter] !== 'green') acc[guessLetter.letter] = guessLetter.status;
+        }
+        return acc;
+      }, {...puzzlePlay.letterStatuses})
     };
-    // Update global state
     updatePuzzlePlay(updatedPuzzlePlay);
   };
 
   return (
     <>
-      {overlayMessage && <OverlayWrapper><OverlayMessage>{overlayMessage}</OverlayMessage></OverlayWrapper>}
+      {overlayMessage && (
+        <OverlayWrapper messageLen={overlayMessage.length}>
+          <OverlayMessage messageLen={overlayMessage.length}>{overlayMessage}</OverlayMessage>
+        </OverlayWrapper>
+      )}
       <GuessWrapper>
         {guessesLocal.map((guess, index) => {
           return <Guess guess={guess} index={index} />;

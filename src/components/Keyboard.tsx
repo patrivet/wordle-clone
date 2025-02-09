@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import { useStoreState } from 'easy-peasy';
 
 const KeyboardContainer = styled.div`
   display flex;
@@ -18,7 +19,6 @@ const Row = styled.div`
 Row.displayName = 'Row';
 
 const Key = styled.button<{ isEnter: boolean; isLetter: boolean }>`
-  background-color: #d3d6da;
   border: none;
   border-radius: 4px;
   color: black;
@@ -34,6 +34,22 @@ const Key = styled.button<{ isEnter: boolean; isLetter: boolean }>`
     background-color: #cbd5e1;
   }
   font-size: ${props => (props.isEnter ? '12px' : '20px')};
+
+  background-color: #d3d6da;
+
+  &[data-status] {
+    color: white;
+  }
+  &[data-status="grey"] {
+    background-color: var(--grey);
+  }
+  &[data-status="yellow"] {
+    background-color: var(--yellow);
+  }
+  &[data-status="green"] {
+    background-color: var(--green);
+  }
+}
 `;
 Key.displayName = 'Key';
 
@@ -47,6 +63,7 @@ type KeyMember =
 const Keyboard = ({ onKeyClick }) => {
   // TODO: receive or read state: for the letter colours - state.PuzzlePlay.lettersGrey etc
   // TODO: for dark mode - adjust fill colour below:
+  const puzzlePlay = useStoreState(state => state.puzzlePlay);
   const deleteKey = (
     <svg
       aria-hidden="true"
@@ -81,12 +98,14 @@ const Keyboard = ({ onKeyClick }) => {
         ? keyMember
         : { key: keyMember, val: keyMember };
     const isLetter = key === 'enter' || key === 'delete' ? false : true;
+    const letterColour = puzzlePlay.letterStatuses[val];
     return (
       <Key
         key={key}
         isEnter={key === 'enter'}
         isLetter={isLetter}
         onClick={() => onKeyClick(key, isLetter)}
+        data-status={letterColour}
       >
         {val}
       </Key>

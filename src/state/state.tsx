@@ -28,10 +28,8 @@ const initialState: AppState = {
       ...emptyGuessTemplate,
       letters: emptyGuessTemplate.letters.map(letter => ({ ...letter }))
     })),
-    lettersGrey: [],
-    lettersGreen: [],
-    lettersYellow: [],
-    activeGuess: 0 // 0 indexed - 1-5
+    activeGuess: 0, // 0 indexed - 1-5
+    letterStatuses: {}
   },
 };
 

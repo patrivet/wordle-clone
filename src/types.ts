@@ -12,10 +12,8 @@ export type PuzzleDefinition = {
 
 export type PuzzlePlay = {
   guesses: Guess[];
-  lettersGrey: string[]; // use a Set here instead?
-  lettersGreen: string[];
-  lettersYellow: string[];
   activeGuess: number; // active row
+  letterStatuses: {}
 };
 
 export type Guess = {

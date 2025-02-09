@@ -4,26 +4,25 @@ import { Guess, PuzzleDefinition } from './types';
   guess object with status on each letter.
 */
 const analyseGuess = ( guess: Guess, puzzleDefinition: PuzzleDefinition ) => {
-  const answerCopy = puzzleDefinition.answer; //ABCAT
-  let answerCopy2 = puzzleDefinition.answer; //ABCAT
+  let answerCopy = puzzleDefinition.answer;
 
   for (let i = 0; i < 5; i++) {
     const nextLetter = guess.letters[i];
 
-    if (nextLetter?.letter === answerCopy[i]) {
+    if (nextLetter?.letter === puzzleDefinition.answer[i]) {
       nextLetter.status = 'green';
-      // remove this letter from answerCopy2 and store back into that variable
-      answerCopy2 =
-        answerCopy2.substring(0, i) + '_' + answerCopy2.substring(i + 1);
+      // remove this letter from answerCopy and store back into that variable
+      answerCopy =
+        answerCopy.substring(0, i) + '_' + answerCopy.substring(i + 1);
       continue;
     }
-    if (answerCopy.indexOf(nextLetter.letter) === -1) {
+    if (puzzleDefinition.answer.indexOf(nextLetter.letter) === -1) {
       nextLetter.status = 'grey';
       continue;
     }
   }
   // remove already set letters from the ?
-  answerCopy2 = answerCopy2.replaceAll('_', '');
+  answerCopy = answerCopy.replaceAll('_', '');
 
   // Return if all letters green or grey.
   if (guess.letters.filter(gl => gl.status === 'green').length === 5) {
@@ -41,11 +40,11 @@ const analyseGuess = ( guess: Guess, puzzleDefinition: PuzzleDefinition ) => {
   for (let i = 0; i < guessLettersLeft.length; i++) {
     const nextLetter = guessLettersLeft[i];
 
-    if (answerCopy2.indexOf(nextLetter.letter) !== -1) {
+    if (answerCopy.indexOf(nextLetter.letter) !== -1) {
       nextLetter.status = 'yellow';
 
-      // remove the first occurance of this letter from answerCopy2 and store back into that variable
-      answerCopy2 = answerCopy2.replace(nextLetter.letter, '_')
+      // remove the first occurance of this letter from answerCopy and store back into that variable
+      answerCopy = answerCopy.replace(nextLetter.letter, '_')
       continue;
     } else {
       nextLetter.status = 'grey';
