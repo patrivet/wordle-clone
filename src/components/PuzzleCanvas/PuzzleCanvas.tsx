@@ -36,21 +36,13 @@ const PuzzleCanvas = ({ puzzlePlay }) => {
     keyPressed: string | any,
     isLetter: boolean = false
   ) => {
-    // if the game has already ended - do nothing.
-    // if a guess exists where isAnswer === true
-    //
-    // if (puzzlePlay.currentGuessIndex > 5) {
-    //   console.log(
-    //     `>> temp log:: handleKeyPress(); currentGuessIndex > 5 -  Game is complete - returning`
-    //   );
-    //   return;
-    // }
-    // if (puzzlePlay.guesses[currentGuessIndex - 1].isAnswer) {
-    //   console.log(
-    //     `>> temp log:: handleKeyPress(); last guess was answer -  Game is complete - returning`
-    //   );
-    //   return;
-    // }
+    // if the game has ended (found answer or have made 6 guesses) - return
+    if (
+      guessesLocal[currentGuessIndex]?.isAnswer ||
+      puzzlePlay.currentGuessIndex === 6
+    ) {
+      return;
+    }
 
     const guessUpdated = guessesLocal[currentGuessIndex];
     const letterBeingSet = guessUpdated.nextLetterIndex;
@@ -76,10 +68,7 @@ const PuzzleCanvas = ({ puzzlePlay }) => {
         }
 
         // Analyse the word
-        const analysedGuess = analyseGuess(
-          guessesLocal[currentGuessIndex],
-          puzzleDefinition
-        );
+        const analysedGuess = analyseGuess(guessUpdated, puzzleDefinition);
         // Guess is the answer
         if (analysedGuess.isAnswer) {
           showOverlay('Splendid', 3000, () => setShowModal(true));
