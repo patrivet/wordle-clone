@@ -28,7 +28,7 @@ const initialState: AppState = {
       ...emptyGuessTemplate,
       letters: emptyGuessTemplate.letters.map(letter => ({ ...letter })),
     })),
-    activeRow: 0, // 0 indexed - 1-5
+    currentGuessIndex: 0, // 0 indexed - 1-5
     letterStatuses: {},
     // isGameComplete: computed(
     //   state => state.puzzlePlay?.guesses.length

@@ -21,7 +21,7 @@ const PuzzleCanvas = ({ puzzlePlay }) => {
     (message: string, duration?: number) => void
   ];
 
-  const activeRow = puzzlePlay.activeRow;
+  const currentGuessIndex = puzzlePlay.currentGuessIndex;
   const [guessesLocal, setLocalGuesses] = useState<GuessType[]>(
     puzzlePlay?.guesses.map(guess => {
       return {
@@ -39,29 +39,28 @@ const PuzzleCanvas = ({ puzzlePlay }) => {
     // if the game has already ended - do nothing.
     // if a guess exists where isAnswer === true
     //
-    // if (puzzlePlay.activeRow > 5) {
+    // if (puzzlePlay.currentGuessIndex > 5) {
     //   console.log(
-    //     `>> temp log:: handleKeyPress(); activeRow > 5 -  Game is complete - returning`
+    //     `>> temp log:: handleKeyPress(); currentGuessIndex > 5 -  Game is complete - returning`
     //   );
     //   return;
     // }
-    // if (puzzlePlay.guesses[activeRow - 1].isAnswer) {
+    // if (puzzlePlay.guesses[currentGuessIndex - 1].isAnswer) {
     //   console.log(
     //     `>> temp log:: handleKeyPress(); last guess was answer -  Game is complete - returning`
     //   );
     //   return;
     // }
 
-    const guessUpdated = guessesLocal[activeRow];
+    const guessUpdated = guessesLocal[currentGuessIndex];
     const letterBeingSet = guessUpdated.nextLetterIndex;
 
     if (!isLetter) {
       // Handle delete and submit
       if (keyPressed === 'delete') {
         guessUpdated.letters[letterBeingSet - 1] = {}; // reset the GuessLetter object entirely - not just the letter
-        guessUpdated.nextLetterIndex -= 1;
-      }
-      if (keyPressed === 'enter') {
+        guessUpdated.nextLetterIndex--;
+      } else if (keyPressed === 'enter') {
         console.log(`>> SUBMIT GUESS`);
 
         // Check for 5 letters
@@ -78,7 +77,7 @@ const PuzzleCanvas = ({ puzzlePlay }) => {
 
         // Analyse the word
         const analysedGuess = analyseGuess(
-          guessesLocal[activeRow],
+          guessesLocal[currentGuessIndex],
           puzzleDefinition
         );
         // Guess is the answer
@@ -96,7 +95,7 @@ const PuzzleCanvas = ({ puzzlePlay }) => {
       if (letterBeingSet === 5) return; // guess length reached- nothing to do.
 
       guessUpdated.letters[letterBeingSet].letter = keyPressed;
-      guessUpdated.nextLetterIndex += 1;
+      guessUpdated.nextLetterIndex++;
       guessUpdated.word = guessUpdated.letters.reduce((acc, nextMem) => {
         return (acc += nextMem.letter);
       }, '');
@@ -105,7 +104,7 @@ const PuzzleCanvas = ({ puzzlePlay }) => {
     // update guessesLocal with the updated guess
     setLocalGuesses(currState => {
       return currState.map((guess, index) => {
-        return index === activeRow ? guessUpdated : guess;
+        return index === currentGuessIndex ? guessUpdated : guess;
       });
     });
   };
@@ -114,9 +113,9 @@ const PuzzleCanvas = ({ puzzlePlay }) => {
     const updatedPuzzlePlay = {
       ...puzzlePlay,
       guesses: puzzlePlay.guesses.map((guess, index) =>
-        index === activeRow ? guessToUpdate : guess
+        index === currentGuessIndex ? guessToUpdate : guess
       ),
-      activeRow: activeRow + 1, // Increment active guess
+      currentGuessIndex: currentGuessIndex + 1, // Increment active guess
       letterStatuses: guessToUpdate.letters.reduce(
         (acc, guessLetter) => {
           if (guessLetter.status) {

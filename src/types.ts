@@ -12,7 +12,7 @@ export type PuzzleDefinition = {
 
 export type PuzzlePlay = {
   guesses: Guess[];
-  activeRow: number; // active row
+  currentGuessIndex: number; // active row
   letterStatuses: {};
   // isGameComplete: boolean;
 };
