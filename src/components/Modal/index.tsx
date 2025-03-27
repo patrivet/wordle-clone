@@ -1,5 +1,6 @@
 import styled from '@emotion/styled';
 import Close from '../../assets/svgs/Close';
+import Share from '../../assets/svgs/Share';
 
 type ModalProps = {
   isOpen: boolean;
@@ -16,6 +17,7 @@ const ModalOverlay = styled.dialog`
   background-color: white;
   z-index: 1000;
   display: flex;
+  align-items: center;
   flex-direction: column;
   padding: var(--padding);
   border: none;
@@ -29,6 +31,7 @@ const ButtonWrapper = styled.div`
     border: none;
     cursor: pointer;
   }
+  align-self: flex-end;
 `;
 
 const Title = styled.h1`
@@ -36,6 +39,29 @@ const Title = styled.h1`
   font-weight: bold;
   text-align: center;
   margin: 16px 0 32px;
+`;
+
+const ShareButton = styled.button`
+  background-color: #58a351;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: none;
+  border-radius: 104px;
+  width: 250px;
+  height: 44px;
+  width: 198px;
+  cursor: pointer;
+  padding: 0 16px;
+  > span {
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 16px;
+    color: white;
+    font-style: normal;
+    letter-spacing 0.64px;
+  }
 `;
 
 const Modal: React.FC<ModalProps> = ({ isOpen = true, onClose }) => {
@@ -49,6 +75,10 @@ const Modal: React.FC<ModalProps> = ({ isOpen = true, onClose }) => {
         </button>
       </ButtonWrapper>
       <Title>Statistics</Title>
+      <ShareButton>
+        <span>Share</span>
+        <Share />
+      </ShareButton>
     </ModalOverlay>
   );
 };
