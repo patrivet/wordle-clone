@@ -1,10 +1,25 @@
 @font-face {
   font-family: 'nyt-franklin';
-  src: url('./franklin-normal-700.ttf') format('truetype');
+  src: url('./assets/fonts/franklin-normal-700.ttf') format('truetype');
   font-weight: bold;
   font-style: normal;
 }
 
 * {
   font-family: 'nyt-franklin', sans-serif;
+  --grey: #787c7e;
+  --yellow: #c9b458;
+  --green: #6aaa64;
+}
+
+body {
+  margin: 0;
+}
+
+.app-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0 auto;
+  max-width: 500px;
 }

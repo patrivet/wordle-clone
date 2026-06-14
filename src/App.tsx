@@ -1,11 +1,13 @@
-import PuzzleCanvas from './components/PuzzleCanvas';
+import PuzzleCanvas from './components/PuzzleCanvas/PuzzleCanvas';
 import { useStoreState } from 'easy-peasy';
 import './App.css';
 
 function App() {
-  const puzzlePlayState = useStoreState(state => state.puzzlePlay)
+  const puzzlePlayState = useStoreState(state => state.puzzlePlay);
   return (
-    <PuzzleCanvas puzzlePlay={puzzlePlayState} />
+    <div className="app-wrapper">
+      <PuzzleCanvas puzzlePlay={puzzlePlayState} />
+    </div>
   );
 }
 
