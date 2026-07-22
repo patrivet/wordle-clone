@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
 type UseOverlayReturn = [
   string | null,
@@ -7,10 +7,23 @@ type UseOverlayReturn = [
 
 const useOverlay = (): UseOverlayReturn => {
   const [message, setMessage] = useState<string | null>(null);
+  const timeoutId = useRef<number | null>(null);
 
-  const showOverlay = (message: string, duration: number = 2000, callback?: () => void) => {
+  useEffect(
+    () => () => {
+      if (timeoutId.current !== null) window.clearTimeout(timeoutId.current);
+    },
+    []
+  );
+
+  const showOverlay = (
+    message: string,
+    duration: number = 2000,
+    callback?: () => void
+  ) => {
+    if (timeoutId.current !== null) window.clearTimeout(timeoutId.current);
     setMessage(message);
-    setTimeout(() => {
+    timeoutId.current = window.setTimeout(() => {
       setMessage(null);
       if (callback) callback();
     }, duration);

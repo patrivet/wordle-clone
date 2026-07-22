@@ -60,7 +60,7 @@ const ShareButton = styled.button`
     line-height: 16px;
     color: white;
     font-style: normal;
-    letter-spacing 0.64px;
+    letter-spacing: 0.64px;
   }
 `;
 
@@ -70,7 +70,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen = true, onClose }) => {
   return (
     <ModalOverlay>
       <ButtonWrapper onClick={onClose}>
-        <button>
+        <button aria-label="Close statistics" type="button">
           <Close />
         </button>
       </ButtonWrapper>

@@ -3,31 +3,42 @@ import styled from '@emotion/styled';
 export const GuessWrapper = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  row-gap: 5px;
   height: 360px;
-  width: 300px;
+  justify-content: center;
   margin: 0 auto;
   padding: 10px;
+  row-gap: 5px;
+  width: 300px;
 `;
-GuessWrapper.displayName = 'GuessWrapper';
 
-export const OverlayWrapper = styled.div<{ messageLen: number }>`
+export const OverlayWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  left: 0;
+  pointer-events: none;
   position: absolute;
   top: 10%;
-  left: 0;
   width: 100%;
-  display: flex;
-  justify-content: center;
+  z-index: 10;
 `;
-OverlayWrapper.displayName = 'OverlayWrapper';
 
 export const OverlayMessage = styled.div`
+  background-color: black;
+  border-radius: 7px;
+  color: white;
   display: flex;
   justify-content: center;
-  color: white;
-  background-color: black;
   padding: 14px;
-  border-radius: 7px;
 `;
-OverlayMessage.displayName = 'OverlayMessage';
+
+export const DebugAnswer = styled.div`
+  align-self: center;
+  background: #f3f3f3;
+  border-radius: 4px;
+  color: #555;
+  font-family: sans-serif;
+  font-size: 12px;
+  font-weight: normal;
+  margin-top: 8px;
+  padding: 4px 8px;
+`;
