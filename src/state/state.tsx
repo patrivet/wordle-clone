@@ -1,46 +1,114 @@
-import { action, computed, createStore } from 'easy-peasy';
-import { GuessStatus, AppState } from '../types';
+import {
+  action,
+  createStore,
+  createTypedHooks,
+  type Action,
+} from 'easy-peasy';
+import {
+  GuessStatus,
+  type AppState,
+  type Guess,
+  type PuzzleDefinition,
+  type PuzzlePlay,
+} from '../types';
+import { mergeLetterStatuses } from '../utils';
 
-// ---- state
-const emptyGuessTemplate = {
-  letters: [
-    { letter: '' },
-    { letter: '' },
-    { letter: '' },
-    { letter: '' },
-    { letter: '' },
-  ],
+export const createEmptyGuess = (): Guess => ({
+  letters: Array.from({ length: 5 }, () => ({ letter: '' })),
   status: GuessStatus.InProgress,
   isAnswer: false,
-  nextLetterIndex: 0,
   word: '',
-};
-
-const initialState: AppState = {
-  puzzleDefinition: {
-    date: '',
-    number: 0,
-    answer: 'SLEEP', // TODO: using a hard coded word to test.
-  },
-  puzzlePlay: {
-    // ? better to have an empty [] here and init 6 empty guesses in the canvas component?
-    guesses: Array.from({ length: 6 }, () => ({
-      ...emptyGuessTemplate,
-      letters: emptyGuessTemplate.letters.map(letter => ({ ...letter })),
-    })),
-    currentGuessIndex: 0, // 0 indexed - 1-5
-    letterStatuses: {},
-    // isGameComplete: computed(
-    //   state => state.puzzlePlay?.guesses.length
-    //   // state.puzzlePlay?.guesses?.some(mem => mem.isAnswer)
-    // ),
-    // ! above doesn't work
-  },
-};
-
-export const store = createStore({
-  ...initialState,
-  updatePuzzlePlay: action((state, payload) => {
-    state.puzzlePlay = payload;
-  }),
 });
+
+export const createInitialPuzzlePlay = (): PuzzlePlay => ({
+  guesses: Array.from({ length: 6 }, createEmptyGuess),
+  currentGuessIndex: 0,
+  letterStatuses: {},
+  gameStatus: 'playing',
+});
+
+type InitialisePuzzlePayload = {
+  definition: PuzzleDefinition;
+  puzzlePlay: PuzzlePlay;
+};
+
+export type StoreModel = AppState & {
+  setPuzzleLoading: Action<StoreModel>;
+  initialisePuzzle: Action<StoreModel, InitialisePuzzlePayload>;
+  setPuzzleError: Action<StoreModel, string>;
+  enterLetter: Action<StoreModel, string>;
+  deleteLetter: Action<StoreModel>;
+  commitGuess: Action<StoreModel, Guess>;
+};
+
+const model: StoreModel = {
+  puzzleDefinition: null,
+  puzzlePlay: createInitialPuzzlePlay(),
+  puzzleLoadStatus: 'loading',
+  puzzleLoadError: null,
+
+  setPuzzleLoading: action(state => {
+    state.puzzleLoadStatus = 'loading';
+    state.puzzleLoadError = null;
+  }),
+
+  initialisePuzzle: action((state, payload) => {
+    state.puzzleDefinition = payload.definition;
+    state.puzzlePlay = payload.puzzlePlay;
+    state.puzzleLoadStatus = 'ready';
+    state.puzzleLoadError = null;
+  }),
+
+  setPuzzleError: action((state, message) => {
+    state.puzzleLoadStatus = 'error';
+    state.puzzleLoadError = message;
+  }),
+
+  enterLetter: action((state, letter) => {
+    if (state.puzzlePlay.gameStatus !== 'playing') return;
+
+    const guess = state.puzzlePlay.guesses[state.puzzlePlay.currentGuessIndex];
+    if (!guess || guess.word.length >= 5) return;
+
+    const nextLetterIndex = guess.word.length;
+    guess.letters[nextLetterIndex] = { letter: letter.toUpperCase() };
+    guess.word = guess.letters.map(member => member.letter).join('');
+  }),
+
+  deleteLetter: action(state => {
+    if (state.puzzlePlay.gameStatus !== 'playing') return;
+
+    const guess = state.puzzlePlay.guesses[state.puzzlePlay.currentGuessIndex];
+    if (!guess || guess.word.length === 0) return;
+
+    guess.letters[guess.word.length - 1] = { letter: '' };
+    guess.word = guess.letters.map(member => member.letter).join('');
+  }),
+
+  commitGuess: action((state, guess) => {
+    const guessIndex = state.puzzlePlay.currentGuessIndex;
+    if (guessIndex >= state.puzzlePlay.guesses.length) return;
+
+    state.puzzlePlay.guesses[guessIndex] = guess;
+    state.puzzlePlay.letterStatuses = mergeLetterStatuses(
+      state.puzzlePlay.letterStatuses,
+      guess
+    );
+    state.puzzlePlay.currentGuessIndex = guessIndex + 1;
+
+    if (guess.isAnswer) {
+      state.puzzlePlay.gameStatus = 'won';
+    } else if (
+      state.puzzlePlay.currentGuessIndex >= state.puzzlePlay.guesses.length
+    ) {
+      state.puzzlePlay.gameStatus = 'lost';
+    }
+  }),
+};
+
+export const store = createStore<StoreModel>(model);
+
+const typedHooks = createTypedHooks<StoreModel>();
+
+export const useAppStoreActions = typedHooks.useStoreActions;
+export const useAppStoreState = typedHooks.useStoreState;

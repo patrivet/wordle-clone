@@ -1,7 +1,14 @@
-// --- types
+export type LetterStatus = 'grey' | 'yellow' | 'green';
+
+export type GameStatus = 'playing' | 'won' | 'lost';
+
+export type PuzzleLoadStatus = 'loading' | 'ready' | 'error';
+
 export type AppState = {
-  puzzleDefinition: PuzzleDefinition;
+  puzzleDefinition: PuzzleDefinition | null;
   puzzlePlay: PuzzlePlay;
+  puzzleLoadStatus: PuzzleLoadStatus;
+  puzzleLoadError: string | null;
 };
 
 export type PuzzleDefinition = {
@@ -12,34 +19,26 @@ export type PuzzleDefinition = {
 
 export type PuzzlePlay = {
   guesses: Guess[];
-  currentGuessIndex: number; // active row
-  letterStatuses: {};
-  // isGameComplete: boolean;
+  currentGuessIndex: number;
+  letterStatuses: Record<string, LetterStatus>;
+  gameStatus: GameStatus;
 };
 
 export type Guess = {
-  status?: GuessStatus; // 'inProgress' | 'rejected' | 'complete';
+  status: GuessStatus;
   letters: GuessLetter[];
-  word?: string;
-  isAnswer?: boolean;
-  // ! TODO: not sure we need this? nextLetterIndex?: number;
+  word: string;
+  isAnswer: boolean;
 };
 
 export type GuessLetter = {
   letter: string;
-  // status?: GuessLetterStatus; // 'grey' | 'yellow' | 'green'; OR undefined (not yet processed?)
-  status?: 'grey' | 'yellow' | 'green';
+  status?: LetterStatus;
   isFrozen?: boolean;
-  // ? need a state for Letter border too? "No entry"/"entrered_preSubmit"/"Submitted".
 };
-
-export type Action =
-  | { type: 'PUZZLE_DEFINITION'; payload?: PuzzleDefinition }
-  | { type: 'PUZZLE_PLAY'; payload?: PuzzlePlay };
 
 export enum GuessStatus {
   InProgress = 'InProgress',
   Rejected = 'Rejected',
   Complete = 'Complete',
 }
-/* or use: type GuessStatus = 'inProgress' | 'rejected' | 'complete'; */

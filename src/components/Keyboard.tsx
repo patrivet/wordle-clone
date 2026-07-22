@@ -1,69 +1,93 @@
 import styled from '@emotion/styled';
-import { useStoreState } from 'easy-peasy';
+import type { LetterStatus } from '../types';
 
 const KeyboardContainer = styled.div`
-  display flex;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
   margin: 0 8px;
 `;
-KeyboardContainer.displayName = 'KeyboardContainer';
 
 const Row = styled.div`
   display: flex;
+  gap: 6px;
   justify-content: center;
-  gap: 0.5rem;
+
   &:not(:last-child) {
-    margin-bottom: 0.5rem;
+    margin-bottom: 8px;
   }
 `;
-Row.displayName = 'Row';
 
-const Key = styled.button<{ isEnter: boolean; isLetter: boolean }>`
+const Key = styled.button<{ $isEnter: boolean }>`
+  align-items: center;
+  background-color: #d3d6da;
   border: none;
   border-radius: 4px;
   color: black;
+  cursor: pointer;
+  display: flex;
+  flex: 1;
+  font-size: ${props => (props.$isEnter ? '12px' : '20px')};
   font-weight: bold;
   height: 58px;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  flex: 1;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  &:hover {
-    background-color: #cbd5e1;
-  }
-  font-size: ${props => (props.isEnter ? '12px' : '20px')};
+  min-width: 0;
+  padding: 0;
+  transition:
+    background-color 100ms,
+    transform 100ms,
+    filter 100ms;
+  user-select: none;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.3);
 
-  background-color: #d3d6da;
+  &:active:not(:disabled) {
+    filter: brightness(0.9);
+    transform: scale(0.95);
+  }
+
+  &:disabled {
+    cursor: default;
+  }
 
   &[data-status] {
     color: white;
   }
-  &[data-status="grey"] {
+
+  &[data-status='grey'] {
     background-color: var(--grey);
   }
-  &[data-status="yellow"] {
+
+  &[data-status='yellow'] {
     background-color: var(--yellow);
   }
-  &[data-status="green"] {
+
+  &[data-status='green'] {
     background-color: var(--green);
   }
-}
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;
-Key.displayName = 'Key';
 
 type KeyMember =
   | string
   | {
-      key: string;
-      val: string | JSX.Element;
+      key: 'enter' | 'delete';
+      value: React.ReactNode;
+      label: string;
     };
 
-const Keyboard = ({ onKeyClick }) => {
-  // TODO: receive or read state: for the letter colours - state.PuzzlePlay.lettersGrey etc
-  // TODO: for dark mode - adjust fill colour below:
-  const puzzlePlay = useStoreState(state => state.puzzlePlay);
+type KeyboardProps = {
+  disabled: boolean;
+  letterStatuses: Record<string, LetterStatus>;
+  onKeyClick: (key: string, isLetter: boolean) => void;
+};
+
+const Keyboard = ({
+  disabled,
+  letterStatuses,
+  onKeyClick,
+}: KeyboardProps) => {
   const deleteKey = (
     <svg
       aria-hidden="true"
@@ -73,15 +97,15 @@ const Keyboard = ({ onKeyClick }) => {
       width="20"
     >
       <path
-        fill="rgb(0, 0, 0)"
+        fill="currentColor"
         d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H7.07L2.4 12l4.66-7H22v14zm-11.59-2L14 13.41 17.59 17 19 15.59 15.41 12 19 8.41 17.59 7 14 10.59 10.41 7 9 8.41 12.59 12 9 15.59z"
-      ></path>
+      />
     </svg>
   );
-  const topRow = ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'];
-  const middleRow = ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'];
-  const bottomRow = [
-    { key: 'enter', val: 'ENTER' },
+  const topRow: KeyMember[] = ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'];
+  const middleRow: KeyMember[] = ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'];
+  const bottomRow: KeyMember[] = [
+    { key: 'enter', value: 'ENTER', label: 'enter' },
     'Z',
     'X',
     'C',
@@ -89,31 +113,34 @@ const Keyboard = ({ onKeyClick }) => {
     'B',
     'N',
     'M',
-    { key: 'delete', val: deleteKey },
+    { key: 'delete', value: deleteKey, label: 'backspace' },
   ];
 
   const renderKey = (keyMember: KeyMember) => {
-    const { key, val } =
-      typeof keyMember === 'object'
-        ? keyMember
-        : { key: keyMember, val: keyMember };
-    const isLetter = key === 'enter' || key === 'delete' ? false : true;
-    const letterColour = puzzlePlay.letterStatuses[val];
+    const key = typeof keyMember === 'string' ? keyMember : keyMember.key;
+    const value = typeof keyMember === 'string' ? keyMember : keyMember.value;
+    const label =
+      typeof keyMember === 'string' ? `add ${key.toLowerCase()}` : keyMember.label;
+    const isLetter = typeof keyMember === 'string';
+
     return (
       <Key
+        aria-label={label}
+        data-key={key}
+        data-status={isLetter ? letterStatuses[key] : undefined}
+        disabled={disabled}
         key={key}
-        isEnter={key === 'enter'}
-        isLetter={isLetter}
         onClick={() => onKeyClick(key, isLetter)}
-        data-status={letterColour}
+        type="button"
+        $isEnter={key === 'enter'}
       >
-        {val}
+        {value}
       </Key>
     );
   };
 
   return (
-    <KeyboardContainer>
+    <KeyboardContainer aria-label="On-screen keyboard">
       <Row>{topRow.map(renderKey)}</Row>
       <Row>{middleRow.map(renderKey)}</Row>
       <Row>{bottomRow.map(renderKey)}</Row>

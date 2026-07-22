@@ -1,71 +1,91 @@
-import { Guess, PuzzleDefinition } from './types';
+import {
+  GuessStatus,
+  type Guess,
+  type GuessLetter,
+  type LetterStatus,
+  type PuzzleDefinition,
+} from './types';
 
-/* return:
-  guess object with status on each letter.
-*/
-const analyseGuess = (guess: Guess, puzzleDefinition: PuzzleDefinition) => {
-  let answerCopy = puzzleDefinition.answer;
-
-  for (let i = 0; i < 5; i++) {
-    const nextLetter = guess.letters[i];
-
-    if (nextLetter?.letter === puzzleDefinition.answer[i]) {
-      nextLetter.status = 'green';
-      // remove this letter from answerCopy and store back into that variable
-      answerCopy =
-        answerCopy.substring(0, i) + '_' + answerCopy.substring(i + 1);
-      continue;
-    }
-    if (puzzleDefinition.answer.indexOf(nextLetter.letter) === -1) {
-      nextLetter.status = 'grey';
-      continue;
-    }
-  }
-  // remove already set letters from the ?
-  answerCopy = answerCopy.replaceAll('_', '');
-
-  // Return if all letters green or grey.
-  if (guess.letters.filter(gl => gl.status === 'green').length === 5) {
-    guess.isAnswer = true;
-    return guess;
-  } else if (guess.letters.filter(gl => gl.status === 'grey').length === 5) {
-    return guess;
-  }
-
-  // ? ------------------------ 2ND LOOP PASS --------------------------------------------
-  const guessLettersLeft = guess.letters.filter(gl => gl.status === undefined);
-
-  for (let i = 0; i < guessLettersLeft.length; i++) {
-    const nextLetter = guessLettersLeft[i];
-
-    if (answerCopy.indexOf(nextLetter.letter) !== -1) {
-      nextLetter.status = 'yellow';
-
-      // remove the first occurance of this letter from answerCopy and store back into that variable
-      answerCopy = answerCopy.replace(nextLetter.letter, '_');
-      continue;
-    } else {
-      nextLetter.status = 'grey';
-      continue;
-    }
-  }
-  return guess;
+const STATUS_PRIORITY: Record<LetterStatus, number> = {
+  grey: 0,
+  yellow: 1,
+  green: 2,
 };
 
-const dictionarySearch = async (word: string): Promise<any | null> => {
-  if (!word || !word.length) return null;
-  const dictionaryUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`;
+export const analyseGuess = (
+  guess: Guess,
+  puzzleDefinition: PuzzleDefinition
+): Guess => {
+  const answer = puzzleDefinition.answer.toUpperCase();
+  const letters: GuessLetter[] = guess.letters.map(member => ({
+    letter: member.letter.toUpperCase(),
+  }));
+  const consumedAnswerLetters = Array.from({ length: answer.length }, () => false);
+
+  letters.forEach((member, index) => {
+    if (member.letter === answer[index]) {
+      member.status = 'green';
+      consumedAnswerLetters[index] = true;
+    }
+  });
+
+  letters.forEach(member => {
+    if (member.status) return;
+
+    const answerIndex = [...answer].findIndex(
+      (answerLetter, index) =>
+        !consumedAnswerLetters[index] && answerLetter === member.letter
+    );
+
+    if (answerIndex >= 0) {
+      member.status = 'yellow';
+      consumedAnswerLetters[answerIndex] = true;
+    } else {
+      member.status = 'grey';
+    }
+  });
+
+  const isAnswer = letters.every(member => member.status === 'green');
+
+  return {
+    ...guess,
+    letters,
+    word: letters.map(member => member.letter).join(''),
+    status: GuessStatus.Complete,
+    isAnswer,
+  };
+};
+
+export const mergeLetterStatuses = (
+  currentStatuses: Record<string, LetterStatus>,
+  guess: Guess
+): Record<string, LetterStatus> =>
+  guess.letters.reduce<Record<string, LetterStatus>>(
+    (statuses, member) => {
+      if (!member.status) return statuses;
+
+      const currentStatus = statuses[member.letter];
+      if (
+        !currentStatus ||
+        STATUS_PRIORITY[member.status] > STATUS_PRIORITY[currentStatus]
+      ) {
+        statuses[member.letter] = member.status;
+      }
+
+      return statuses;
+    },
+    { ...currentStatuses }
+  );
+
+export const dictionarySearch = async (word: string): Promise<boolean> => {
+  if (!word) return false;
+
+  const dictionaryUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`;
   try {
     const response = await fetch(dictionaryUrl);
-    if (!response.ok) {
-      return null;
-    }
-    const data = await response.json();
-    return data;
+    return response.ok;
   } catch (error) {
-    console.error(`error looking up word =${word}; error =${error}`);
-    return null;
+    console.error(`Error looking up word "${word}":`, error);
+    return false;
   }
 };
-
-export { analyseGuess, dictionarySearch };
