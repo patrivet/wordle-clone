@@ -7,6 +7,7 @@ import {
   useAppStoreState,
 } from './state/state';
 import { loadPuzzlePlay, savePuzzlePlay } from './storage/gameStorage';
+import { loadSettings, saveSettings } from './storage/settingsStorage';
 import './App.css';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
     puzzleLoadError,
     puzzleLoadStatus,
     puzzlePlay,
+    settings,
   } = useAppStoreState(state => state);
   const { initialisePuzzle, setPuzzleError, setPuzzleLoading } =
     useAppStoreActions(actions => actions);
@@ -29,6 +31,7 @@ function App() {
         initialisePuzzle({
           definition,
           puzzlePlay: savedPuzzlePlay ?? createInitialPuzzlePlay(),
+          settings: loadSettings(),
         });
       })
       .catch((error: unknown) => {
@@ -45,8 +48,9 @@ function App() {
   useEffect(() => {
     if (puzzleLoadStatus === 'ready' && puzzleDefinition) {
       savePuzzlePlay(puzzleDefinition, puzzlePlay);
+      saveSettings(settings);
     }
-  }, [puzzleDefinition, puzzleLoadStatus, puzzlePlay]);
+  }, [puzzleDefinition, puzzleLoadStatus, puzzlePlay, settings]);
 
   return (
     <div className="app-wrapper">

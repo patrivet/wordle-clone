@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import Guess from '../Guess';
+import GameHeader from '../GameHeader';
 import Keyboard from '../Keyboard';
 import Modal from '../Modal';
+import SettingsModal from '../SettingsModal';
 import useOverlay from '../../hooks/useOverlay';
 import { useAppStoreActions, useAppStoreState } from '../../state/state';
 import type { Guess as GuessType, LetterStatus } from '../../types';
-import { analyseGuess, dictionarySearch } from '../../utils';
+import {
+  analyseGuess,
+  buildShareText,
+  dictionarySearch,
+  getHardModeViolation,
+} from '../../utils';
 import {
   DebugAnswer,
   GuessWrapper,
@@ -31,14 +38,15 @@ type InvalidState = {
 const PuzzleCanvas = () => {
   const puzzleDefinition = useAppStoreState(state => state.puzzleDefinition);
   const puzzlePlay = useAppStoreState(state => state.puzzlePlay);
-  const { commitGuess, deleteLetter, enterLetter } = useAppStoreActions(
-    actions => actions
-  );
+  const settings = useAppStoreState(state => state.settings);
+  const { commitGuess, deleteLetter, enterLetter, setHardMode } =
+    useAppStoreActions(actions => actions);
   const [overlayMessage, showOverlay] = useOverlay();
   const [invalidState, setInvalidState] = useState<InvalidState | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [revealState, setRevealState] = useState<RevealState | null>(null);
-  const [showModal, setShowModal] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showStatistics, setShowStatistics] = useState(false);
   const [winningGuessIndex, setWinningGuessIndex] = useState<number | null>(null);
   const inputLocked = useRef(false);
   const timeoutIds = useRef<number[]>([]);
@@ -77,14 +85,14 @@ const PuzzleCanvas = () => {
 
     if (analysedGuess.isAnswer) {
       setWinningGuessIndex(guessIndex);
-      showOverlay('Splendid', 2000, () => setShowModal(true));
+      showOverlay('Splendid', 2000, () => setShowStatistics(true));
       const timeoutId = window.setTimeout(() => setWinningGuessIndex(null), 1000);
       timeoutIds.current.push(timeoutId);
       return;
     }
 
     if (guessIndex === 5) {
-      showOverlay(puzzleDefinition.answer, 3000);
+      showOverlay(puzzleDefinition.answer, 3000, () => setShowStatistics(true));
     }
   };
 
@@ -93,6 +101,17 @@ const PuzzleCanvas = () => {
     if (!currentGuess || currentGuess.word.length !== 5) {
       triggerInvalidGuess('Not enough letters');
       return;
+    }
+
+    if (settings.hardMode) {
+      const violation = getHardModeViolation(
+        currentGuess.word,
+        puzzlePlay.guesses.slice(0, currentGuessIndex)
+      );
+      if (violation) {
+        triggerInvalidGuess(violation);
+        return;
+      }
     }
 
     inputLocked.current = true;
@@ -135,8 +154,33 @@ const PuzzleCanvas = () => {
     }
   };
 
+  const shareResults = async (): Promise<'copied' | 'shared'> => {
+    const text = buildShareText(
+      puzzleDefinition,
+      puzzlePlay,
+      settings.hardMode
+    );
+
+    if (typeof navigator.share === 'function') {
+      await navigator.share({ text });
+      return 'shared';
+    }
+
+    if (!navigator.clipboard?.writeText) {
+      throw new Error('Sharing is not supported in this browser');
+    }
+
+    await navigator.clipboard.writeText(text);
+    return 'copied';
+  };
+
   return (
     <>
+      <GameHeader
+        onOpenSettings={() => setShowSettings(true)}
+        onOpenStatistics={() => setShowStatistics(true)}
+        statisticsAvailable={puzzlePlay.gameStatus !== 'playing'}
+      />
       {showDebugAnswer && (
         <DebugAnswer data-testid="debug-answer">
           Answer: {puzzleDefinition.answer}
@@ -172,7 +216,22 @@ const PuzzleCanvas = () => {
         }
         onKeyClick={handleKeyPress}
       />
-      {showModal && <Modal isOpen onClose={() => setShowModal(false)} />}
+      {showSettings && (
+        <SettingsModal
+          hardMode={settings.hardMode}
+          hardModeLocked={currentGuessIndex > 0}
+          onClose={() => setShowSettings(false)}
+          onHardModeChange={setHardMode}
+          puzzleNumber={puzzleDefinition.number}
+        />
+      )}
+      {showStatistics && (
+        <Modal
+          isOpen
+          onClose={() => setShowStatistics(false)}
+          onShare={shareResults}
+        />
+      )}
     </>
   );
 };

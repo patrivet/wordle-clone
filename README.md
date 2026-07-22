@@ -32,3 +32,9 @@ npm run build
 ```
 
 Submitted guesses and keyboard state are saved in local storage and restored only when they belong to the current daily puzzle.
+
+Hard Mode is available from the settings cog. The preference is saved locally,
+and it cannot be changed after the first guess has been submitted. Completed
+games can be shared from the Statistics screen using the system share sheet or,
+when that is unavailable, by copying the result grid to the clipboard. Finished
+games can reopen that screen from the Statistics icon in the header.
