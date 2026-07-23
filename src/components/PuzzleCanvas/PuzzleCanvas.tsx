@@ -49,12 +49,21 @@ const PuzzleCanvas = () => {
   const [showStatistics, setShowStatistics] = useState(false);
   const [winningGuessIndex, setWinningGuessIndex] = useState<number | null>(null);
   const inputLocked = useRef(false);
+  const physicalKeyDownHandler = useRef<(event: KeyboardEvent) => void>(() => {});
   const timeoutIds = useRef<number[]>([]);
 
   useEffect(
     () => () => timeoutIds.current.forEach(timeoutId => window.clearTimeout(timeoutId)),
     []
   );
+
+  useEffect(() => {
+    const handlePhysicalKeyDown = (event: KeyboardEvent) =>
+      physicalKeyDownHandler.current(event);
+
+    window.addEventListener('keydown', handlePhysicalKeyDown);
+    return () => window.removeEventListener('keydown', handlePhysicalKeyDown);
+  }, []);
 
   if (!puzzleDefinition) return null;
 
@@ -151,6 +160,49 @@ const PuzzleCanvas = () => {
       deleteLetter();
     } else if (keyPressed === 'enter') {
       void submitGuess();
+    }
+  };
+
+  physicalKeyDownHandler.current = event => {
+    if (
+      showSettings ||
+      showStatistics ||
+      keyboardDisabled ||
+      inputLocked.current ||
+      event.isComposing ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey
+    ) {
+      return;
+    }
+
+    const target = event.target;
+    const isEditableTarget =
+      target instanceof HTMLElement &&
+      (target.matches('input, textarea, select') || target.isContentEditable);
+
+    if (isEditableTarget) return;
+
+    if (/^[a-z]$/i.test(event.key)) {
+      event.preventDefault();
+      handleKeyPress(event.key, true);
+      return;
+    }
+
+    if (event.key === 'Backspace') {
+      event.preventDefault();
+      handleKeyPress('delete', false);
+      return;
+    }
+
+    const activatesFocusedControl =
+      target instanceof HTMLElement &&
+      Boolean(target.closest('button, a[href], [role="button"]'));
+
+    if (event.key === 'Enter' && !activatesFocusedControl) {
+      event.preventDefault();
+      handleKeyPress('enter', false);
     }
   };
 

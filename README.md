@@ -33,6 +33,11 @@ npm run build
 
 Submitted guesses and keyboard state are saved in local storage and restored only when they belong to the current daily puzzle.
 
+Guesses can be entered with the physical keyboard as well as the on-screen
+keyboard. Letter keys add A–Z, Backspace removes the latest letter, and Enter
+submits the current row. Interactive controls can be reached with Tab and show
+a visible focus outline.
+
 Hard Mode is available from the settings cog. The preference is saved locally,
 and it cannot be changed after the first guess has been submitted. Completed
 games can be shared from the Statistics screen using the system share sheet or,
