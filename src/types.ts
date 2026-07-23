@@ -9,6 +9,11 @@ export type AppState = {
   puzzlePlay: PuzzlePlay;
   puzzleLoadStatus: PuzzleLoadStatus;
   puzzleLoadError: string | null;
+  settings: AppSettings;
+};
+
+export type AppSettings = {
+  hardMode: boolean;
 };
 
 export type PuzzleDefinition = {

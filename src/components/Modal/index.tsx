@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import styled from '@emotion/styled';
 import Close from '../../assets/svgs/Close';
 import Share from '../../assets/svgs/Share';
@@ -5,6 +6,7 @@ import Share from '../../assets/svgs/Share';
 type ModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onShare: () => Promise<'copied' | 'shared'>;
 };
 
 const ModalOverlay = styled.dialog`
@@ -64,21 +66,44 @@ const ShareButton = styled.button`
   }
 `;
 
-const Modal: React.FC<ModalProps> = ({ isOpen = true, onClose }) => {
+const ShareFeedback = styled.p`
+  color: #565758;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  font-weight: normal;
+  min-height: 18px;
+`;
+
+const Modal: React.FC<ModalProps> = ({ isOpen = true, onClose, onShare }) => {
+  const [shareFeedback, setShareFeedback] = useState('');
+
   if (!isOpen) return null;
 
+  const handleShare = async () => {
+    try {
+      const result = await onShare();
+      setShareFeedback(
+        result === 'copied' ? 'Results copied to clipboard' : 'Results shared'
+      );
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      setShareFeedback('Unable to share results');
+    }
+  };
+
   return (
-    <ModalOverlay>
-      <ButtonWrapper onClick={onClose}>
-        <button aria-label="Close statistics" type="button">
+    <ModalOverlay aria-labelledby="statistics-title" aria-modal="true" open>
+      <ButtonWrapper>
+        <button aria-label="Close statistics" onClick={onClose} type="button">
           <Close />
         </button>
       </ButtonWrapper>
-      <Title>Statistics</Title>
-      <ShareButton>
-        <span>Share</span>
+      <Title id="statistics-title">Statistics</Title>
+      <ShareButton aria-label="Share results" onClick={() => void handleShare()}>
+        <span>{shareFeedback ? 'Share again' : 'Share'}</span>
         <Share />
       </ShareButton>
+      <ShareFeedback aria-live="polite">{shareFeedback}</ShareFeedback>
     </ModalOverlay>
   );
 };

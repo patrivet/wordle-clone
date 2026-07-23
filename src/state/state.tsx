@@ -7,6 +7,7 @@ import {
 import {
   GuessStatus,
   type AppState,
+  type AppSettings,
   type Guess,
   type PuzzleDefinition,
   type PuzzlePlay,
@@ -27,9 +28,14 @@ export const createInitialPuzzlePlay = (): PuzzlePlay => ({
   gameStatus: 'playing',
 });
 
+export const createDefaultSettings = (): AppSettings => ({
+  hardMode: false,
+});
+
 type InitialisePuzzlePayload = {
   definition: PuzzleDefinition;
   puzzlePlay: PuzzlePlay;
+  settings: AppSettings;
 };
 
 export type StoreModel = AppState & {
@@ -39,6 +45,7 @@ export type StoreModel = AppState & {
   enterLetter: Action<StoreModel, string>;
   deleteLetter: Action<StoreModel>;
   commitGuess: Action<StoreModel, Guess>;
+  setHardMode: Action<StoreModel, boolean>;
 };
 
 const model: StoreModel = {
@@ -46,6 +53,7 @@ const model: StoreModel = {
   puzzlePlay: createInitialPuzzlePlay(),
   puzzleLoadStatus: 'loading',
   puzzleLoadError: null,
+  settings: createDefaultSettings(),
 
   setPuzzleLoading: action(state => {
     state.puzzleLoadStatus = 'loading';
@@ -55,6 +63,7 @@ const model: StoreModel = {
   initialisePuzzle: action((state, payload) => {
     state.puzzleDefinition = payload.definition;
     state.puzzlePlay = payload.puzzlePlay;
+    state.settings = payload.settings;
     state.puzzleLoadStatus = 'ready';
     state.puzzleLoadError = null;
   }),
@@ -103,6 +112,11 @@ const model: StoreModel = {
     ) {
       state.puzzlePlay.gameStatus = 'lost';
     }
+  }),
+
+  setHardMode: action((state, hardMode) => {
+    if (state.puzzlePlay.currentGuessIndex > 0) return;
+    state.settings.hardMode = hardMode;
   }),
 };
 

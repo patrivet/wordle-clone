@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { GuessStatus, type Guess, type PuzzleDefinition } from './types';
-import { analyseGuess, mergeLetterStatuses } from './utils';
+import {
+  analyseGuess,
+  buildShareText,
+  getHardModeViolation,
+  mergeLetterStatuses,
+} from './utils';
 
 const puzzleDefinition: PuzzleDefinition = {
   answer: 'SLEEP',
@@ -56,5 +61,74 @@ describe('mergeLetterStatuses', () => {
     expect(result.E).toBe('green');
     expect(result.S).toBe('green');
     expect(result.R).toBe('grey');
+  });
+});
+
+describe('getHardModeViolation', () => {
+  it('requires green letters to stay in their revealed positions', () => {
+    const previousGuess = analyseGuess(makeGuess('STARE'), puzzleDefinition);
+
+    expect(getHardModeViolation('CRANE', [previousGuess])).toBe(
+      '1st letter must be S'
+    );
+  });
+
+  it('requires yellow letters to be reused', () => {
+    const previousGuess = analyseGuess(makeGuess('STARE'), puzzleDefinition);
+
+    expect(getHardModeViolation('SHOUT', [previousGuess])).toBe(
+      'Guess must contain E'
+    );
+  });
+
+  it('preserves the revealed minimum for duplicate letters', () => {
+    const previousGuess: Guess = {
+      ...makeGuess('EERIE'),
+      letters: [
+        { letter: 'E', status: 'yellow' },
+        { letter: 'E', status: 'yellow' },
+        { letter: 'R', status: 'grey' },
+        { letter: 'I', status: 'grey' },
+        { letter: 'E', status: 'grey' },
+      ],
+      status: GuessStatus.Complete,
+    };
+
+    expect(getHardModeViolation('SHARE', [previousGuess])).toBe(
+      "Guess must contain 2 E's"
+    );
+  });
+
+  it('accepts a guess that uses every revealed hint', () => {
+    const previousGuess = analyseGuess(makeGuess('STARE'), puzzleDefinition);
+
+    expect(getHardModeViolation('SHEEP', [previousGuess])).toBeNull();
+  });
+});
+
+describe('buildShareText', () => {
+  it('formats a hard-mode result without revealing the answer', () => {
+    const firstGuess = analyseGuess(makeGuess('STARE'), puzzleDefinition);
+    const winningGuess = analyseGuess(makeGuess('SLEEP'), puzzleDefinition);
+
+    expect(
+      buildShareText(
+        puzzleDefinition,
+        {
+          currentGuessIndex: 2,
+          gameStatus: 'won',
+          guesses: [
+            firstGuess,
+            winningGuess,
+            makeGuess(''),
+            makeGuess(''),
+            makeGuess(''),
+            makeGuess(''),
+          ],
+          letterStatuses: {},
+        },
+        true
+      )
+    ).toBe('Wordle 1,859 2/6*\n\n🟩⬛⬛⬛🟨\n🟩🟩🟩🟩🟩');
   });
 });
