@@ -29,6 +29,7 @@ export const createInitialPuzzlePlay = (): PuzzlePlay => ({
 });
 
 export const createDefaultSettings = (): AppSettings => ({
+  frozenLettersPersist: false,
   hardMode: false,
 });
 
@@ -44,7 +45,9 @@ export type StoreModel = AppState & {
   setPuzzleError: Action<StoreModel, string>;
   enterLetter: Action<StoreModel, string>;
   deleteLetter: Action<StoreModel>;
+  toggleFrozenLetter: Action<StoreModel, number>;
   commitGuess: Action<StoreModel, Guess>;
+  setFrozenLettersPersist: Action<StoreModel, boolean>;
   setHardMode: Action<StoreModel, boolean>;
 };
 
@@ -77,9 +80,13 @@ const model: StoreModel = {
     if (state.puzzlePlay.gameStatus !== 'playing') return;
 
     const guess = state.puzzlePlay.guesses[state.puzzlePlay.currentGuessIndex];
-    if (!guess || guess.word.length >= 5) return;
+    if (!guess) return;
 
-    const nextLetterIndex = guess.word.length;
+    const nextLetterIndex = guess.letters.findIndex(
+      member => !member.letter && !member.isFrozen
+    );
+    if (nextLetterIndex < 0) return;
+
     guess.letters[nextLetterIndex] = { letter: letter.toUpperCase() };
     guess.word = guess.letters.map(member => member.letter).join('');
   }),
@@ -88,10 +95,30 @@ const model: StoreModel = {
     if (state.puzzlePlay.gameStatus !== 'playing') return;
 
     const guess = state.puzzlePlay.guesses[state.puzzlePlay.currentGuessIndex];
-    if (!guess || guess.word.length === 0) return;
+    if (!guess) return;
 
-    guess.letters[guess.word.length - 1] = { letter: '' };
+    let letterIndex = -1;
+    for (let index = guess.letters.length - 1; index >= 0; index -= 1) {
+      const member = guess.letters[index];
+      if (member?.letter && !member.isFrozen) {
+        letterIndex = index;
+        break;
+      }
+    }
+    if (letterIndex < 0) return;
+
+    guess.letters[letterIndex] = { letter: '' };
     guess.word = guess.letters.map(member => member.letter).join('');
+  }),
+
+  toggleFrozenLetter: action((state, letterIndex) => {
+    if (state.puzzlePlay.gameStatus !== 'playing') return;
+
+    const guess = state.puzzlePlay.guesses[state.puzzlePlay.currentGuessIndex];
+    const member = guess?.letters[letterIndex];
+    if (!member?.letter) return;
+
+    member.isFrozen = !member.isFrozen;
   }),
 
   commitGuess: action((state, guess) => {
@@ -111,7 +138,21 @@ const model: StoreModel = {
       state.puzzlePlay.currentGuessIndex >= state.puzzlePlay.guesses.length
     ) {
       state.puzzlePlay.gameStatus = 'lost';
+    } else if (state.settings.frozenLettersPersist) {
+      const nextLetters = guess.letters.map(member =>
+        member.isFrozen
+          ? { letter: member.letter, isFrozen: true }
+          : { letter: '' }
+      );
+      const nextGuess = state.puzzlePlay.guesses[state.puzzlePlay.currentGuessIndex];
+
+      nextGuess.letters = nextLetters;
+      nextGuess.word = nextLetters.map(member => member.letter).join('');
     }
+  }),
+
+  setFrozenLettersPersist: action((state, frozenLettersPersist) => {
+    state.settings.frozenLettersPersist = frozenLettersPersist;
   }),
 
   setHardMode: action((state, hardMode) => {

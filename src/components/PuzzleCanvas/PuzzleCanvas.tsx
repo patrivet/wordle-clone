@@ -39,8 +39,14 @@ const PuzzleCanvas = () => {
   const puzzleDefinition = useAppStoreState(state => state.puzzleDefinition);
   const puzzlePlay = useAppStoreState(state => state.puzzlePlay);
   const settings = useAppStoreState(state => state.settings);
-  const { commitGuess, deleteLetter, enterLetter, setHardMode } =
-    useAppStoreActions(actions => actions);
+  const {
+    commitGuess,
+    deleteLetter,
+    enterLetter,
+    setFrozenLettersPersist,
+    setHardMode,
+    toggleFrozenLetter,
+  } = useAppStoreActions(actions => actions);
   const [overlayMessage, showOverlay] = useOverlay();
   const [invalidState, setInvalidState] = useState<InvalidState | null>(null);
   const [isValidating, setIsValidating] = useState(false);
@@ -107,7 +113,10 @@ const PuzzleCanvas = () => {
 
   const submitGuess = async () => {
     const currentGuess = puzzlePlay.guesses[currentGuessIndex];
-    if (!currentGuess || currentGuess.word.length !== 5) {
+    if (
+      !currentGuess ||
+      currentGuess.letters.some(member => !member.letter)
+    ) {
       triggerInvalidGuess('Not enough letters');
       return;
     }
@@ -253,10 +262,12 @@ const PuzzleCanvas = () => {
               index={index}
               invalidAnimationKey={invalidState?.attempt ?? 0}
               isCurrent={index === currentGuessIndex && !revealState}
+              freezeDisabled={keyboardDisabled}
               isInvalid={invalidState?.guessIndex === index}
               isRevealing={isRevealing}
               isWinning={winningGuessIndex === index}
               key={index}
+              onToggleFreeze={toggleFrozenLetter}
             />
           );
         })}
@@ -270,9 +281,11 @@ const PuzzleCanvas = () => {
       />
       {showSettings && (
         <SettingsModal
+          frozenLettersPersist={settings.frozenLettersPersist}
           hardMode={settings.hardMode}
           hardModeLocked={currentGuessIndex > 0}
           onClose={() => setShowSettings(false)}
+          onFrozenLettersPersistChange={setFrozenLettersPersist}
           onHardModeChange={setHardMode}
           puzzleNumber={puzzleDefinition.number}
         />

@@ -7,9 +7,11 @@ describe('SettingsModal', () => {
     const onHardModeChange = vi.fn();
     render(
       <SettingsModal
+        frozenLettersPersist={false}
         hardMode={false}
         hardModeLocked={false}
         onClose={vi.fn()}
+        onFrozenLettersPersistChange={vi.fn()}
         onHardModeChange={onHardModeChange}
         puzzleNumber={1859}
       />
@@ -24,14 +26,39 @@ describe('SettingsModal', () => {
   it('locks hard mode after a guess has been submitted', () => {
     render(
       <SettingsModal
+        frozenLettersPersist={false}
         hardMode
         hardModeLocked
         onClose={vi.fn()}
+        onFrozenLettersPersistChange={vi.fn()}
         onHardModeChange={vi.fn()}
         puzzleNumber={1859}
       />
     );
 
     expect(screen.getByRole('switch', { name: 'Hard Mode' })).toBeDisabled();
+  });
+
+  it('changes whether frozen letters carry into the next guess', () => {
+    const onFrozenLettersPersistChange = vi.fn();
+    render(
+      <SettingsModal
+        frozenLettersPersist={false}
+        hardMode={false}
+        hardModeLocked={false}
+        onClose={vi.fn()}
+        onFrozenLettersPersistChange={onFrozenLettersPersistChange}
+        onHardModeChange={vi.fn()}
+        puzzleNumber={1859}
+      />
+    );
+
+    const persistSwitch = screen.getByRole('switch', {
+      name: 'Frozen letters persist',
+    });
+    expect(persistSwitch).toHaveAttribute('aria-checked', 'false');
+
+    fireEvent.click(persistSwitch);
+    expect(onFrozenLettersPersistChange).toHaveBeenCalledWith(true);
   });
 });

@@ -13,6 +13,7 @@ export type AppState = {
 };
 
 export type AppSettings = {
+  frozenLettersPersist: boolean;
   hardMode: boolean;
 };
 
