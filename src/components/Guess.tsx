@@ -218,6 +218,7 @@ const Guess = ({
   ) => {
     if (event.isPrimary === false || event.button !== 0) return;
 
+    event.preventDefault();
     cancelHold();
     holdTimeoutId.current = window.setTimeout(() => {
       holdTimeoutId.current = null;

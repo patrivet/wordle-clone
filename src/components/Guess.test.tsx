@@ -87,7 +87,11 @@ describe('Guess', () => {
     const onToggleFreeze = renderGuess();
     const tile = screen.getByRole('button', { name: '1st letter, S' });
 
-    fireEvent.pointerDown(tile, { button: 0, isPrimary: true });
+    const pointerDownAccepted = fireEvent.pointerDown(tile, {
+      button: 0,
+      isPrimary: true,
+    });
+    expect(pointerDownAccepted).toBe(false);
     vi.advanceTimersByTime(499);
     expect(onToggleFreeze).not.toHaveBeenCalled();
 
