@@ -43,3 +43,8 @@ and it cannot be changed after the first guess has been submitted. Completed
 games can be shared from the Statistics screen using the system share sheet or,
 when that is unavailable, by copying the result grid to the clipboard. Finished
 games can reopen that screen from the Statistics icon in the header.
+
+Press and hold a populated tile for half a second to freeze or unfreeze it.
+Frozen tiles have a pastel-blue background and are skipped when entering or
+deleting letters. Enable **Frozen letters persist** in Settings to carry frozen
+letters into the same positions in the next guess.

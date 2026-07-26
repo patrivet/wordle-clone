@@ -20,6 +20,7 @@ export const analyseGuess = (
   const answer = puzzleDefinition.answer.toUpperCase();
   const letters: GuessLetter[] = guess.letters.map(member => ({
     letter: member.letter.toUpperCase(),
+    isFrozen: member.isFrozen || undefined,
   }));
   const consumedAnswerLetters = Array.from({ length: answer.length }, () => false);
 

@@ -7,16 +7,38 @@ beforeEach(() => {
 
 describe('settings storage', () => {
   it('uses normal mode when no settings have been stored', () => {
-    expect(loadSettings()).toEqual({ hardMode: false });
+    expect(loadSettings()).toEqual({
+      frozenLettersPersist: false,
+      hardMode: false,
+    });
   });
 
-  it('persists the hard-mode preference independently of a puzzle', () => {
-    saveSettings({ hardMode: true });
+  it('persists preferences independently of a puzzle', () => {
+    saveSettings({ frozenLettersPersist: true, hardMode: true });
 
-    expect(loadSettings()).toEqual({ hardMode: true });
+    expect(loadSettings()).toEqual({
+      frozenLettersPersist: true,
+      hardMode: true,
+    });
     expect(
       JSON.parse(window.localStorage.getItem('wordle-clone:settings') ?? '')
-    ).toEqual({ hardMode: true, version: 1 });
+    ).toEqual({
+      frozenLettersPersist: true,
+      hardMode: true,
+      version: 2,
+    });
+  });
+
+  it('preserves a hard-mode preference from version one', () => {
+    window.localStorage.setItem(
+      'wordle-clone:settings',
+      JSON.stringify({ hardMode: true, version: 1 })
+    );
+
+    expect(loadSettings()).toEqual({
+      frozenLettersPersist: false,
+      hardMode: true,
+    });
   });
 
   it('discards malformed settings', () => {
@@ -25,7 +47,10 @@ describe('settings storage', () => {
       JSON.stringify({ hardMode: 'yes', version: 1 })
     );
 
-    expect(loadSettings()).toEqual({ hardMode: false });
+    expect(loadSettings()).toEqual({
+      frozenLettersPersist: false,
+      hardMode: false,
+    });
     expect(window.localStorage.getItem('wordle-clone:settings')).toBeNull();
   });
 });

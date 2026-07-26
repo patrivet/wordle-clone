@@ -136,17 +136,21 @@ const Footer = styled.footer`
 `;
 
 type SettingsModalProps = {
+  frozenLettersPersist: boolean;
   hardMode: boolean;
   hardModeLocked: boolean;
   onClose: () => void;
+  onFrozenLettersPersistChange: (enabled: boolean) => void;
   onHardModeChange: (enabled: boolean) => void;
   puzzleNumber: number;
 };
 
 const SettingsModal = ({
+  frozenLettersPersist,
   hardMode,
   hardModeLocked,
   onClose,
+  onFrozenLettersPersistChange,
   onHardModeChange,
   puzzleNumber,
 }: SettingsModalProps) => {
@@ -183,6 +187,21 @@ const SettingsModal = ({
             aria-label="Hard Mode"
             disabled={hardModeLocked}
             onClick={() => onHardModeChange(!hardMode)}
+            role="switch"
+            type="button"
+          />
+        </SettingRow>
+        <SettingRow>
+          <SettingCopy>
+            <h3>Frozen letters persist</h3>
+            <p>Carry frozen letters into the next guess</p>
+          </SettingCopy>
+          <Switch
+            aria-checked={frozenLettersPersist}
+            aria-label="Frozen letters persist"
+            onClick={() =>
+              onFrozenLettersPersistChange(!frozenLettersPersist)
+            }
             role="switch"
             type="button"
           />

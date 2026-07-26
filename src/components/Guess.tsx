@@ -1,8 +1,12 @@
 import { css, keyframes } from '@emotion/react';
 import styled from '@emotion/styled';
+import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import type { Guess as GuessType, LetterStatus } from '../types';
 
+const FREEZE_HOLD_DURATION_MS = 500;
+
 type GuessProps = {
+  freezeDisabled: boolean;
   guess: GuessType;
   index: number;
   isCurrent: boolean;
@@ -10,6 +14,7 @@ type GuessProps = {
   invalidAnimationKey: number;
   isRevealing: boolean;
   isWinning: boolean;
+  onToggleFreeze: (letterIndex: number) => void;
 };
 
 const popIn = keyframes`
@@ -73,33 +78,46 @@ const statusColour = (status?: LetterStatus): string => {
   }
 };
 
-const GuessLetter = styled.span<{
+const letterStyles = (props: {
   $animateEntry: boolean;
+  $hasLetter: boolean;
+  $isFrozen: boolean;
   $position: number;
   $status?: LetterStatus;
   $isRevealing: boolean;
-}>`
+}) => css`
   align-items: center;
-  background-color: ${props => statusColour(props.$status)};
+  background-color: ${props.$status
+    ? statusColour(props.$status)
+    : props.$isFrozen
+      ? 'var(--frozen)'
+      : 'transparent'};
   border: 2px solid
-    ${props =>
-      props.$status ? statusColour(props.$status) : props.children ? '#878a8c' : '#d3d6da'};
+    ${props.$status
+      ? statusColour(props.$status)
+      : props.$isFrozen
+        ? 'var(--frozen-border)'
+        : props.$hasLetter
+          ? '#878a8c'
+          : '#d3d6da'};
   box-sizing: border-box;
-  color: ${props => (props.$status ? 'white' : '#000')};
+  color: ${props.$status ? 'white' : '#000'};
   display: flex;
   font-size: 32px;
+  font-weight: bold;
   height: 52px;
   justify-content: center;
+  padding: 0;
+  touch-action: manipulation;
+  user-select: none;
   width: 52px;
 
-  ${props =>
-    props.$animateEntry &&
+  ${props.$animateEntry &&
     css`
       animation: ${popIn} 100ms;
     `}
 
-  ${props =>
-    props.$isRevealing &&
+  ${props.$isRevealing &&
     css`
       --reveal-color: ${statusColour(props.$status)};
       animation: ${reveal} 500ms ease-in ${props.$position * 300}ms both;
@@ -108,6 +126,22 @@ const GuessLetter = styled.span<{
   @media (prefers-reduced-motion: reduce) {
     animation-delay: 0ms;
     animation-duration: 1ms;
+  }
+`;
+
+type GuessLetterStyleProps = Parameters<typeof letterStyles>[0];
+
+const GuessLetter = styled.span<GuessLetterStyleProps>`
+  ${letterStyles}
+`;
+
+const InteractiveGuessLetter = styled.button<GuessLetterStyleProps>`
+  ${letterStyles}
+
+  cursor: pointer;
+
+  &:active {
+    filter: brightness(0.96);
   }
 `;
 
@@ -142,7 +176,8 @@ const ordinal = (position: number): string => {
 const tileLabel = (
   position: number,
   letter: string,
-  status?: LetterStatus
+  status?: LetterStatus,
+  isFrozen?: boolean
 ): string => {
   if (!letter) return `${ordinal(position)} letter, empty`;
   if (status === 'green') return `${ordinal(position)} letter, ${letter}, correct`;
@@ -150,10 +185,14 @@ const tileLabel = (
     return `${ordinal(position)} letter, ${letter}, present in another position`;
   }
   if (status === 'grey') return `${ordinal(position)} letter, ${letter}, absent`;
+  if (isFrozen) {
+    return `${ordinal(position)} letter, ${letter}, frozen. Hold to unfreeze`;
+  }
   return `${ordinal(position)} letter, ${letter}`;
 };
 
 const Guess = ({
+  freezeDisabled,
   guess,
   index,
   isCurrent,
@@ -161,32 +200,96 @@ const Guess = ({
   invalidAnimationKey,
   isRevealing,
   isWinning,
-}: GuessProps) => (
-  <GuessRow
-    key={`${index}-${invalidAnimationKey}`}
-    className="guess"
-    $isInvalid={isInvalid}
-    $isWinning={isWinning}
-  >
-    {guess.letters.map((member, letterIndex) => (
-      <GuessLetter
-        aria-label={tileLabel(letterIndex, member.letter, member.status)}
-        aria-roledescription="tile"
-        data-animation={
-          isRevealing ? 'flip' : isCurrent && member.letter ? 'pop' : 'idle'
+  onToggleFreeze,
+}: GuessProps) => {
+  const holdTimeoutId = useRef<number | null>(null);
+
+  const cancelHold = () => {
+    if (holdTimeoutId.current === null) return;
+    window.clearTimeout(holdTimeoutId.current);
+    holdTimeoutId.current = null;
+  };
+
+  useEffect(() => cancelHold, []);
+
+  const startHold = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    letterIndex: number
+  ) => {
+    if (event.isPrimary === false || event.button !== 0) return;
+
+    event.preventDefault();
+    cancelHold();
+    holdTimeoutId.current = window.setTimeout(() => {
+      holdTimeoutId.current = null;
+      onToggleFreeze(letterIndex);
+    }, FREEZE_HOLD_DURATION_MS);
+  };
+
+  return (
+    <GuessRow
+      key={`${index}-${invalidAnimationKey}`}
+      className="guess"
+      $isInvalid={isInvalid}
+      $isWinning={isWinning}
+    >
+      {guess.letters.map((member, letterIndex) => {
+        const isInteractive =
+          isCurrent && !freezeDisabled && Boolean(member.letter);
+        const sharedProps = {
+          'aria-label': tileLabel(
+            letterIndex,
+            member.letter,
+            member.status,
+            member.isFrozen
+          ),
+          'aria-roledescription': 'tile',
+          'data-animation': isRevealing
+            ? 'flip'
+            : isCurrent && member.letter
+              ? 'pop'
+              : 'idle',
+          'data-state':
+            member.status ??
+            (member.isFrozen ? 'frozen' : member.letter ? 'tbd' : 'empty'),
+          $animateEntry:
+            isCurrent && Boolean(member.letter) && !isRevealing,
+          $hasLetter: Boolean(member.letter),
+          $isFrozen: Boolean(member.isFrozen),
+          $isRevealing: isRevealing,
+          $position: letterIndex,
+          $status: member.status,
+        };
+
+        if (isInteractive) {
+          return (
+            <InteractiveGuessLetter
+              {...sharedProps}
+              aria-pressed={Boolean(member.isFrozen)}
+              key={letterIndex}
+              onClick={event => {
+                if (event.detail === 0) onToggleFreeze(letterIndex);
+              }}
+              onContextMenu={event => event.preventDefault()}
+              onPointerCancel={cancelHold}
+              onPointerDown={event => startHold(event, letterIndex)}
+              onPointerLeave={cancelHold}
+              onPointerUp={cancelHold}
+              type="button"
+            >
+              {member.letter}
+            </InteractiveGuessLetter>
+          );
         }
-        data-state={member.status ?? (member.letter ? 'tbd' : 'empty')}
-        key={letterIndex}
-        role="img"
-        $animateEntry={isCurrent && Boolean(member.letter) && !isRevealing}
-        $isRevealing={isRevealing}
-        $position={letterIndex}
-        $status={member.status}
-      >
-        {member.letter}
-      </GuessLetter>
-    ))}
-  </GuessRow>
-);
+
+        return (
+          <GuessLetter {...sharedProps} key={letterIndex} role="img">
+            {member.letter}
+          </GuessLetter>
+        );
+      })}
+    </GuessRow>
+  );
+};
 
 export default Guess;
