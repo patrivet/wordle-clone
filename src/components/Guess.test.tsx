@@ -134,4 +134,27 @@ describe('Guess', () => {
     fireEvent.click(tile, { detail: 0 });
     expect(onToggleFreeze).toHaveBeenCalledWith(0);
   });
+
+  it('shows locked state without an editing control', () => {
+    const onToggleFreeze = renderGuess({
+      ...baseGuess,
+      letters: [
+        { letter: 'S', isLocked: true },
+        { letter: '' },
+        { letter: '' },
+        { letter: '' },
+        { letter: '' },
+      ],
+    });
+    const tile = screen.getByRole('img', {
+      name: '1st letter, S, locked',
+    });
+
+    expect(tile).toHaveAttribute('data-state', 'locked');
+    expect(tile.querySelector('svg')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: '1st letter, S, locked' })
+    ).not.toBeInTheDocument();
+    expect(onToggleFreeze).not.toHaveBeenCalled();
+  });
 });

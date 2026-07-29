@@ -37,10 +37,11 @@ describe('game storage', () => {
     savePuzzlePlay(puzzleDefinition, puzzlePlay);
 
     expect(JSON.parse(window.localStorage.getItem('wordle-clone:game') ?? '')).toEqual({
+      carriedLetters: [],
       puzzleDate: '2026-07-22',
       puzzleNumber: 1859,
       submittedWords: ['STARE'],
-      version: 1,
+      version: 2,
     });
   });
 
@@ -61,6 +62,47 @@ describe('game storage', () => {
     expect(restored?.guesses[0].status).toBe(GuessStatus.Complete);
     expect(restored?.letterStatuses.S).toBe('green');
     expect(restored?.letterStatuses.E).toBe('yellow');
+  });
+
+  it('restores carried letters without restoring manually typed letters', () => {
+    const puzzlePlay = createInitialPuzzlePlay();
+    const submittedGuess = analyseGuess(makeGuess('STARE'), puzzleDefinition);
+    puzzlePlay.guesses[0] = submittedGuess;
+    puzzlePlay.guesses[1] = {
+      ...puzzlePlay.guesses[1],
+      letters: [
+        { isCarried: true, letter: 'S' },
+        { isCarried: true, isFrozen: true, letter: 'L' },
+        { letter: 'A' },
+        { isCarried: true, isLocked: true, letter: 'E' },
+        { letter: '' },
+      ],
+      word: 'SLAE',
+    };
+    puzzlePlay.currentGuessIndex = 1;
+    puzzlePlay.letterStatuses = mergeLetterStatuses({}, submittedGuess);
+
+    savePuzzlePlay(puzzleDefinition, puzzlePlay);
+
+    expect(
+      JSON.parse(window.localStorage.getItem('wordle-clone:game') ?? '')
+        .carriedLetters
+    ).toEqual([
+      { letter: 'S', position: 0, state: 'editable' },
+      { letter: 'L', position: 1, state: 'frozen' },
+      { letter: 'E', position: 3, state: 'locked' },
+    ]);
+
+    const restored = loadPuzzlePlay(puzzleDefinition);
+
+    expect(restored?.guesses[1].letters).toEqual([
+      { isCarried: true, isFrozen: undefined, isLocked: undefined, letter: 'S' },
+      { isCarried: true, isFrozen: true, isLocked: undefined, letter: 'L' },
+      { letter: '' },
+      { isCarried: true, isFrozen: undefined, isLocked: true, letter: 'E' },
+      { letter: '' },
+    ]);
+    expect(restored?.guesses[1].word).toBe('SLE');
   });
 
   it('discards state from another daily puzzle', () => {

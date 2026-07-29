@@ -12,6 +12,8 @@
   --green: #6aaa64;
   --frozen: #b9ddf3;
   --frozen-border: #5b9fc9;
+  --locked: #eef0f1;
+  --locked-border: #878a8c;
 }
 
 body {
