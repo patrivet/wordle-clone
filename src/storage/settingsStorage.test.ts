@@ -8,24 +8,48 @@ beforeEach(() => {
 describe('settings storage', () => {
   it('uses normal mode when no settings have been stored', () => {
     expect(loadSettings()).toEqual({
+      autoFillGreenLetters: 'off',
       frozenLettersPersist: false,
       hardMode: false,
     });
   });
 
   it('persists preferences independently of a puzzle', () => {
-    saveSettings({ frozenLettersPersist: true, hardMode: true });
+    saveSettings({
+      autoFillGreenLetters: 'locked',
+      frozenLettersPersist: true,
+      hardMode: true,
+    });
 
     expect(loadSettings()).toEqual({
+      autoFillGreenLetters: 'locked',
       frozenLettersPersist: true,
       hardMode: true,
     });
     expect(
       JSON.parse(window.localStorage.getItem('wordle-clone:settings') ?? '')
     ).toEqual({
+      autoFillGreenLetters: 'locked',
       frozenLettersPersist: true,
       hardMode: true,
-      version: 2,
+      version: 3,
+    });
+  });
+
+  it('preserves version two preferences with auto-fill disabled', () => {
+    window.localStorage.setItem(
+      'wordle-clone:settings',
+      JSON.stringify({
+        frozenLettersPersist: true,
+        hardMode: true,
+        version: 2,
+      })
+    );
+
+    expect(loadSettings()).toEqual({
+      autoFillGreenLetters: 'off',
+      frozenLettersPersist: true,
+      hardMode: true,
     });
   });
 
@@ -36,6 +60,7 @@ describe('settings storage', () => {
     );
 
     expect(loadSettings()).toEqual({
+      autoFillGreenLetters: 'off',
       frozenLettersPersist: false,
       hardMode: true,
     });
@@ -44,10 +69,16 @@ describe('settings storage', () => {
   it('discards malformed settings', () => {
     window.localStorage.setItem(
       'wordle-clone:settings',
-      JSON.stringify({ hardMode: 'yes', version: 1 })
+      JSON.stringify({
+        autoFillGreenLetters: 'sometimes',
+        frozenLettersPersist: false,
+        hardMode: false,
+        version: 3,
+      })
     );
 
     expect(loadSettings()).toEqual({
+      autoFillGreenLetters: 'off',
       frozenLettersPersist: false,
       hardMode: false,
     });

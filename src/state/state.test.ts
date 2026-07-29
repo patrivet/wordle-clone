@@ -54,9 +54,9 @@ describe('frozen letter state', () => {
 
     expect(store.getState().puzzlePlay.currentGuessIndex).toBe(1);
     expect(store.getState().puzzlePlay.guesses[1].letters).toEqual([
-      { isFrozen: true, letter: 'S' },
+      { isCarried: true, isFrozen: true, letter: 'S' },
       { letter: '' },
-      { isFrozen: true, letter: 'A' },
+      { isCarried: true, isFrozen: true, letter: 'A' },
       { letter: '' },
       { letter: '' },
     ]);
@@ -77,5 +77,71 @@ describe('frozen letter state', () => {
       { letter: '' },
       { letter: '' },
     ]);
+  });
+});
+
+describe('auto-fill green letters', () => {
+  it.each([
+    [
+      'editable',
+      { isCarried: true, letter: 'S' },
+    ],
+    [
+      'frozen',
+      { isCarried: true, isFrozen: true, letter: 'S' },
+    ],
+    [
+      'locked',
+      { isCarried: true, isLocked: true, letter: 'S' },
+    ],
+  ] as const)('carries green letters in %s mode', (mode, expectedLetter) => {
+    const actions = store.getActions();
+    actions.setAutoFillGreenLetters(mode);
+    [...'STARE'].forEach(actions.enterLetter);
+
+    const currentGuess = store.getState().puzzlePlay.guesses[0];
+    actions.commitGuess(analyseGuess(currentGuess, definition));
+
+    expect(store.getState().puzzlePlay.guesses[1].letters).toEqual([
+      expectedLetter,
+      { letter: '' },
+      { letter: '' },
+      { letter: '' },
+      { letter: '' },
+    ]);
+  });
+
+  it('prevents locked letters from being unfrozen or deleted', () => {
+    const actions = store.getActions();
+    actions.setAutoFillGreenLetters('locked');
+    [...'STARE'].forEach(actions.enterLetter);
+
+    const currentGuess = store.getState().puzzlePlay.guesses[0];
+    actions.commitGuess(analyseGuess(currentGuess, definition));
+    actions.toggleFrozenLetter(0);
+    actions.deleteLetter();
+    actions.enterLetter('A');
+
+    expect(store.getState().puzzlePlay.guesses[1].letters.slice(0, 2)).toEqual([
+      { isCarried: true, isLocked: true, letter: 'S' },
+      { letter: 'A' },
+    ]);
+  });
+
+  it('keeps a manually frozen green letter frozen in editable mode', () => {
+    const actions = store.getActions();
+    actions.setAutoFillGreenLetters('editable');
+    actions.setFrozenLettersPersist(true);
+    [...'STARE'].forEach(actions.enterLetter);
+    actions.toggleFrozenLetter(0);
+
+    const currentGuess = store.getState().puzzlePlay.guesses[0];
+    actions.commitGuess(analyseGuess(currentGuess, definition));
+
+    expect(store.getState().puzzlePlay.guesses[1].letters[0]).toEqual({
+      isCarried: true,
+      isFrozen: true,
+      letter: 'S',
+    });
   });
 });

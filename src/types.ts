@@ -4,6 +4,12 @@ export type GameStatus = 'playing' | 'won' | 'lost';
 
 export type PuzzleLoadStatus = 'loading' | 'ready' | 'error';
 
+export type AutoFillGreenLettersMode =
+  | 'off'
+  | 'editable'
+  | 'frozen'
+  | 'locked';
+
 export type AppState = {
   puzzleDefinition: PuzzleDefinition | null;
   puzzlePlay: PuzzlePlay;
@@ -13,6 +19,7 @@ export type AppState = {
 };
 
 export type AppSettings = {
+  autoFillGreenLetters: AutoFillGreenLettersMode;
   frozenLettersPersist: boolean;
   hardMode: boolean;
 };
@@ -40,7 +47,9 @@ export type Guess = {
 export type GuessLetter = {
   letter: string;
   status?: LetterStatus;
+  isCarried?: boolean;
   isFrozen?: boolean;
+  isLocked?: boolean;
 };
 
 export enum GuessStatus {

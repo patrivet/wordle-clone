@@ -43,6 +43,7 @@ const PuzzleCanvas = () => {
     commitGuess,
     deleteLetter,
     enterLetter,
+    setAutoFillGreenLetters,
     setFrozenLettersPersist,
     setHardMode,
     toggleFrozenLetter,
@@ -281,10 +282,12 @@ const PuzzleCanvas = () => {
       />
       {showSettings && (
         <SettingsModal
+          autoFillGreenLetters={settings.autoFillGreenLetters}
           frozenLettersPersist={settings.frozenLettersPersist}
           hardMode={settings.hardMode}
           hardModeLocked={currentGuessIndex > 0}
           onClose={() => setShowSettings(false)}
+          onAutoFillGreenLettersChange={setAutoFillGreenLetters}
           onFrozenLettersPersistChange={setFrozenLettersPersist}
           onHardModeChange={setHardMode}
           puzzleNumber={puzzleDefinition.number}

@@ -2,23 +2,43 @@ import { createDefaultSettings } from '../state/state';
 import type { AppSettings } from '../types';
 
 const STORAGE_KEY = 'wordle-clone:settings';
-const STORAGE_VERSION = 2;
+const STORAGE_VERSION = 3;
 
 type StoredSettings = AppSettings & {
   version: typeof STORAGE_VERSION;
 };
 
-type LegacyStoredSettings = Pick<AppSettings, 'hardMode'> & {
+type VersionOneStoredSettings = Pick<AppSettings, 'hardMode'> & {
   version: 1;
 };
 
-const isLegacyStoredSettings = (
+type VersionTwoStoredSettings = Pick<
+  AppSettings,
+  'frozenLettersPersist' | 'hardMode'
+> & {
+  version: 2;
+};
+
+const isVersionOneStoredSettings = (
   value: unknown
-): value is LegacyStoredSettings => {
+): value is VersionOneStoredSettings => {
   if (!value || typeof value !== 'object') return false;
 
-  const settings = value as Partial<LegacyStoredSettings>;
+  const settings = value as Partial<VersionOneStoredSettings>;
   return settings.version === 1 && typeof settings.hardMode === 'boolean';
+};
+
+const isVersionTwoStoredSettings = (
+  value: unknown
+): value is VersionTwoStoredSettings => {
+  if (!value || typeof value !== 'object') return false;
+
+  const settings = value as Partial<VersionTwoStoredSettings>;
+  return (
+    settings.version === 2 &&
+    typeof settings.frozenLettersPersist === 'boolean' &&
+    typeof settings.hardMode === 'boolean'
+  );
 };
 
 const isStoredSettings = (value: unknown): value is StoredSettings => {
@@ -27,6 +47,9 @@ const isStoredSettings = (value: unknown): value is StoredSettings => {
   const settings = value as Partial<StoredSettings>;
   return (
     settings.version === STORAGE_VERSION &&
+    ['off', 'editable', 'frozen', 'locked'].includes(
+      settings.autoFillGreenLetters ?? ''
+    ) &&
     typeof settings.frozenLettersPersist === 'boolean' &&
     typeof settings.hardMode === 'boolean'
   );
@@ -41,7 +64,15 @@ export const loadSettings = (
   try {
     const storedSettings: unknown = JSON.parse(storedValue);
     if (!isStoredSettings(storedSettings)) {
-      if (isLegacyStoredSettings(storedSettings)) {
+      if (isVersionTwoStoredSettings(storedSettings)) {
+        return {
+          ...createDefaultSettings(),
+          frozenLettersPersist: storedSettings.frozenLettersPersist,
+          hardMode: storedSettings.hardMode,
+        };
+      }
+
+      if (isVersionOneStoredSettings(storedSettings)) {
         return {
           ...createDefaultSettings(),
           hardMode: storedSettings.hardMode,
@@ -53,6 +84,7 @@ export const loadSettings = (
     }
 
     return {
+      autoFillGreenLetters: storedSettings.autoFillGreenLetters,
       frozenLettersPersist: storedSettings.frozenLettersPersist,
       hardMode: storedSettings.hardMode,
     };

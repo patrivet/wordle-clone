@@ -1,6 +1,7 @@
 import { css, keyframes } from '@emotion/react';
 import styled from '@emotion/styled';
 import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react';
+import Lock from '../assets/svgs/Lock';
 import type { Guess as GuessType, LetterStatus } from '../types';
 
 const FREEZE_HOLD_DURATION_MS = 500;
@@ -82,6 +83,7 @@ const letterStyles = (props: {
   $animateEntry: boolean;
   $hasLetter: boolean;
   $isFrozen: boolean;
+  $isLocked: boolean;
   $position: number;
   $status?: LetterStatus;
   $isRevealing: boolean;
@@ -89,17 +91,21 @@ const letterStyles = (props: {
   align-items: center;
   background-color: ${props.$status
     ? statusColour(props.$status)
-    : props.$isFrozen
-      ? 'var(--frozen)'
-      : 'transparent'};
+    : props.$isLocked
+      ? 'var(--locked)'
+      : props.$isFrozen
+        ? 'var(--frozen)'
+        : 'transparent'};
   border: 2px solid
     ${props.$status
       ? statusColour(props.$status)
-      : props.$isFrozen
-        ? 'var(--frozen-border)'
-        : props.$hasLetter
-          ? '#878a8c'
-          : '#d3d6da'};
+      : props.$isLocked
+        ? 'var(--locked-border)'
+        : props.$isFrozen
+          ? 'var(--frozen-border)'
+          : props.$hasLetter
+            ? '#878a8c'
+            : '#d3d6da'};
   box-sizing: border-box;
   color: ${props.$status ? 'white' : '#000'};
   display: flex;
@@ -108,6 +114,7 @@ const letterStyles = (props: {
   height: 52px;
   justify-content: center;
   padding: 0;
+  position: relative;
   touch-action: manipulation;
   user-select: none;
   width: 52px;
@@ -145,6 +152,14 @@ const InteractiveGuessLetter = styled.button<GuessLetterStyleProps>`
   }
 `;
 
+const LockedIcon = styled.span`
+  bottom: 2px;
+  color: #565758;
+  display: flex;
+  position: absolute;
+  right: 2px;
+`;
+
 const GuessRow = styled.div<{ $isInvalid: boolean; $isWinning: boolean }>`
   display: flex;
   gap: 5px;
@@ -177,7 +192,8 @@ const tileLabel = (
   position: number,
   letter: string,
   status?: LetterStatus,
-  isFrozen?: boolean
+  isFrozen?: boolean,
+  isLocked?: boolean
 ): string => {
   if (!letter) return `${ordinal(position)} letter, empty`;
   if (status === 'green') return `${ordinal(position)} letter, ${letter}, correct`;
@@ -185,6 +201,7 @@ const tileLabel = (
     return `${ordinal(position)} letter, ${letter}, present in another position`;
   }
   if (status === 'grey') return `${ordinal(position)} letter, ${letter}, absent`;
+  if (isLocked) return `${ordinal(position)} letter, ${letter}, locked`;
   if (isFrozen) {
     return `${ordinal(position)} letter, ${letter}, frozen. Hold to unfreeze`;
   }
@@ -235,13 +252,17 @@ const Guess = ({
     >
       {guess.letters.map((member, letterIndex) => {
         const isInteractive =
-          isCurrent && !freezeDisabled && Boolean(member.letter);
+          isCurrent &&
+          !freezeDisabled &&
+          !member.isLocked &&
+          Boolean(member.letter);
         const sharedProps = {
           'aria-label': tileLabel(
             letterIndex,
             member.letter,
             member.status,
-            member.isFrozen
+            member.isFrozen,
+            member.isLocked
           ),
           'aria-roledescription': 'tile',
           'data-animation': isRevealing
@@ -251,11 +272,18 @@ const Guess = ({
               : 'idle',
           'data-state':
             member.status ??
-            (member.isFrozen ? 'frozen' : member.letter ? 'tbd' : 'empty'),
+            (member.isLocked
+              ? 'locked'
+              : member.isFrozen
+                ? 'frozen'
+                : member.letter
+                  ? 'tbd'
+                  : 'empty'),
           $animateEntry:
             isCurrent && Boolean(member.letter) && !isRevealing,
           $hasLetter: Boolean(member.letter),
           $isFrozen: Boolean(member.isFrozen),
+          $isLocked: Boolean(member.isLocked),
           $isRevealing: isRevealing,
           $position: letterIndex,
           $status: member.status,
@@ -285,6 +313,11 @@ const Guess = ({
         return (
           <GuessLetter {...sharedProps} key={letterIndex} role="img">
             {member.letter}
+            {member.isLocked && !member.status && (
+              <LockedIcon>
+                <Lock />
+              </LockedIcon>
+            )}
           </GuessLetter>
         );
       })}

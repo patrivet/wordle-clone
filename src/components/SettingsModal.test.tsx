@@ -7,10 +7,12 @@ describe('SettingsModal', () => {
     const onHardModeChange = vi.fn();
     render(
       <SettingsModal
+        autoFillGreenLetters="off"
         frozenLettersPersist={false}
         hardMode={false}
         hardModeLocked={false}
         onClose={vi.fn()}
+        onAutoFillGreenLettersChange={vi.fn()}
         onFrozenLettersPersistChange={vi.fn()}
         onHardModeChange={onHardModeChange}
         puzzleNumber={1859}
@@ -26,10 +28,12 @@ describe('SettingsModal', () => {
   it('locks hard mode after a guess has been submitted', () => {
     render(
       <SettingsModal
+        autoFillGreenLetters="off"
         frozenLettersPersist={false}
         hardMode
         hardModeLocked
         onClose={vi.fn()}
+        onAutoFillGreenLettersChange={vi.fn()}
         onFrozenLettersPersistChange={vi.fn()}
         onHardModeChange={vi.fn()}
         puzzleNumber={1859}
@@ -43,10 +47,12 @@ describe('SettingsModal', () => {
     const onFrozenLettersPersistChange = vi.fn();
     render(
       <SettingsModal
+        autoFillGreenLetters="off"
         frozenLettersPersist={false}
         hardMode={false}
         hardModeLocked={false}
         onClose={vi.fn()}
+        onAutoFillGreenLettersChange={vi.fn()}
         onFrozenLettersPersistChange={onFrozenLettersPersistChange}
         onHardModeChange={vi.fn()}
         puzzleNumber={1859}
@@ -60,5 +66,31 @@ describe('SettingsModal', () => {
 
     fireEvent.click(persistSwitch);
     expect(onFrozenLettersPersistChange).toHaveBeenCalledWith(true);
+  });
+
+  it('selects one auto-fill behaviour', () => {
+    const onAutoFillGreenLettersChange = vi.fn();
+    render(
+      <SettingsModal
+        autoFillGreenLetters="off"
+        frozenLettersPersist={false}
+        hardMode={false}
+        hardModeLocked={false}
+        onAutoFillGreenLettersChange={onAutoFillGreenLettersChange}
+        onClose={vi.fn()}
+        onFrozenLettersPersistChange={vi.fn()}
+        onHardModeChange={vi.fn()}
+        puzzleNumber={1859}
+      />
+    );
+
+    const group = screen.getByRole('group', {
+      name: 'Auto-fill green letters',
+    });
+    expect(group).toBeVisible();
+    expect(screen.getByRole('radio', { name: /Off/ })).toBeChecked();
+
+    fireEvent.click(screen.getByRole('radio', { name: /Locked/ }));
+    expect(onAutoFillGreenLettersChange).toHaveBeenCalledWith('locked');
   });
 });
